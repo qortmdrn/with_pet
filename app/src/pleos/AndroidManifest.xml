@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pleos Vehicle SDK: 펫 모드 공조·창문 (최소 권한만 선언) -->
+    <uses-permission android:name="pleos.car.permission.CAR_CLIMATE" />
+    <uses-permission android:name="pleos.car.permission.CONTROL_CAR_CLIMATE" />
+    <uses-permission android:name="pleos.car.permission.CAR_WINDOWS" />
+    <uses-permission android:name="pleos.car.permission.CONTROL_CAR_WINDOWS" />
+    <!-- NaviHelper SDK: 길 안내·경유지 -->
+    <uses-permission android:name="pleos.car.permission.NAVI_ROUTE" />
+    <!-- FusedLocation SDK: 차량 위치 (기기 안에서만 사용, 외부 전송 없음) -->
+    <uses-permission android:name="pleos.car.permission.FUSED_LOCATION" />
+</manifest>

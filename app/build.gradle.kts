@@ -98,6 +98,11 @@ dependencies {
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
 
+    // Pleos Connect SDK: pleos flavor에서만 사용 (42dot SDK 라이선스)
+    "pleosImplementation"(libs.pleos.vehicle)
+    "pleosImplementation"(libs.pleos.navi.helper)
+    "pleosImplementation"(libs.pleos.fused.location)
+
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.mockk)
