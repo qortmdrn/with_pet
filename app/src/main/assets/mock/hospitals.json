@@ -1,0 +1,376 @@
+[
+  {
+    "id": "h01",
+    "name": "테스트 동물병원 A",
+    "lat": 37.58268,
+    "lng": 126.98983,
+    "address": "서울 중구 테스트로 1",
+    "phone": "010-0000-0001",
+    "is24Hours": true,
+    "weeklyHours": [],
+    "isPartner": true
+  },
+  {
+    "id": "h02",
+    "name": "테스트 동물병원 B",
+    "lat": 37.51127,
+    "lng": 126.95263,
+    "address": "서울 서대문구 테스트로 2",
+    "phone": "010-0000-0002",
+    "is24Hours": true,
+    "weeklyHours": [],
+    "isPartner": false
+  },
+  {
+    "id": "h03",
+    "name": "테스트 동물병원 C",
+    "lat": 37.52994,
+    "lng": 127.10393,
+    "address": "서울 강남구 테스트로 3",
+    "phone": "010-0000-0003",
+    "is24Hours": true,
+    "weeklyHours": [],
+    "isPartner": true
+  },
+  {
+    "id": "h04",
+    "name": "테스트 동물병원 D",
+    "lat": 37.58162,
+    "lng": 126.94443,
+    "address": "서울 마포구 테스트로 4",
+    "phone": "010-0000-0004",
+    "is24Hours": false,
+    "weeklyHours": [],
+    "isPartner": false
+  },
+  {
+    "id": "h05",
+    "name": "테스트 동물병원 E",
+    "lat": 37.49096,
+    "lng": 127.0125,
+    "address": "서울 동작구 테스트로 5",
+    "phone": "010-0000-0005",
+    "is24Hours": false,
+    "weeklyHours": [],
+    "isPartner": false
+  },
+  {
+    "id": "h06",
+    "name": "테스트 동물병원 F",
+    "lat": 37.57,
+    "lng": 126.99072,
+    "address": "서울 종로구 테스트로 6",
+    "phone": "010-0000-0006",
+    "is24Hours": false,
+    "weeklyHours": [
+      {
+        "dayOfWeek": "MONDAY",
+        "open": "09:00",
+        "close": "21:00"
+      },
+      {
+        "dayOfWeek": "TUESDAY",
+        "open": "09:00",
+        "close": "21:00"
+      },
+      {
+        "dayOfWeek": "WEDNESDAY",
+        "open": "09:00",
+        "close": "21:00"
+      },
+      {
+        "dayOfWeek": "THURSDAY",
+        "open": "09:00",
+        "close": "21:00"
+      },
+      {
+        "dayOfWeek": "FRIDAY",
+        "open": "09:00",
+        "close": "21:00"
+      },
+      {
+        "dayOfWeek": "SATURDAY",
+        "open": "09:00",
+        "close": "21:00"
+      },
+      {
+        "dayOfWeek": "SUNDAY",
+        "open": "09:00",
+        "close": "21:00"
+      }
+    ],
+    "isPartner": true
+  },
+  {
+    "id": "h07",
+    "name": "테스트 동물병원 G",
+    "lat": 37.55767,
+    "lng": 126.948,
+    "address": "서울 용산구 테스트로 7",
+    "phone": "010-0000-0007",
+    "is24Hours": false,
+    "weeklyHours": [
+      {
+        "dayOfWeek": "MONDAY",
+        "open": "10:00",
+        "close": "20:00"
+      },
+      {
+        "dayOfWeek": "TUESDAY",
+        "open": "10:00",
+        "close": "20:00"
+      },
+      {
+        "dayOfWeek": "WEDNESDAY",
+        "open": "10:00",
+        "close": "20:00"
+      },
+      {
+        "dayOfWeek": "THURSDAY",
+        "open": "10:00",
+        "close": "20:00"
+      },
+      {
+        "dayOfWeek": "FRIDAY",
+        "open": "10:00",
+        "close": "20:00"
+      },
+      {
+        "dayOfWeek": "SATURDAY",
+        "open": "10:00",
+        "close": "20:00"
+      }
+    ],
+    "isPartner": false
+  },
+  {
+    "id": "h08",
+    "name": "테스트 동물병원 H",
+    "lat": 37.60524,
+    "lng": 126.96002,
+    "address": "서울 은평구 테스트로 8",
+    "phone": "010-0000-0008",
+    "is24Hours": false,
+    "weeklyHours": [
+      {
+        "dayOfWeek": "MONDAY",
+        "open": "09:30",
+        "close": "22:00"
+      },
+      {
+        "dayOfWeek": "TUESDAY",
+        "open": "09:30",
+        "close": "22:00"
+      },
+      {
+        "dayOfWeek": "WEDNESDAY",
+        "open": "09:30",
+        "close": "22:00"
+      },
+      {
+        "dayOfWeek": "THURSDAY",
+        "open": "09:30",
+        "close": "22:00"
+      },
+      {
+        "dayOfWeek": "FRIDAY",
+        "open": "09:30",
+        "close": "22:00"
+      },
+      {
+        "dayOfWeek": "SATURDAY",
+        "open": "09:30",
+        "close": "22:00"
+      },
+      {
+        "dayOfWeek": "SUNDAY",
+        "open": "09:30",
+        "close": "22:00"
+      }
+    ],
+    "isPartner": true
+  },
+  {
+    "id": "h09",
+    "name": "테스트 동물병원 I",
+    "lat": 37.63182,
+    "lng": 126.98513,
+    "address": "서울 성북구 테스트로 9",
+    "phone": "010-0000-0009",
+    "is24Hours": false,
+    "weeklyHours": [
+      {
+        "dayOfWeek": "MONDAY",
+        "open": "10:00",
+        "close": "01:00"
+      },
+      {
+        "dayOfWeek": "TUESDAY",
+        "open": "10:00",
+        "close": "01:00"
+      },
+      {
+        "dayOfWeek": "WEDNESDAY",
+        "open": "10:00",
+        "close": "01:00"
+      },
+      {
+        "dayOfWeek": "THURSDAY",
+        "open": "10:00",
+        "close": "01:00"
+      },
+      {
+        "dayOfWeek": "FRIDAY",
+        "open": "10:00",
+        "close": "01:00"
+      },
+      {
+        "dayOfWeek": "SATURDAY",
+        "open": "10:00",
+        "close": "01:00"
+      },
+      {
+        "dayOfWeek": "SUNDAY",
+        "open": "10:00",
+        "close": "01:00"
+      }
+    ],
+    "isPartner": false
+  },
+  {
+    "id": "h10",
+    "name": "테스트 동물병원 J",
+    "lat": 37.53126,
+    "lng": 127.0221,
+    "address": "서울 성동구 테스트로 10",
+    "phone": "010-0000-0010",
+    "is24Hours": false,
+    "weeklyHours": [
+      {
+        "dayOfWeek": "MONDAY",
+        "open": "09:00",
+        "close": "19:00"
+      },
+      {
+        "dayOfWeek": "TUESDAY",
+        "open": "09:00",
+        "close": "19:00"
+      },
+      {
+        "dayOfWeek": "WEDNESDAY",
+        "open": "09:00",
+        "close": "19:00"
+      },
+      {
+        "dayOfWeek": "THURSDAY",
+        "open": "09:00",
+        "close": "19:00"
+      },
+      {
+        "dayOfWeek": "FRIDAY",
+        "open": "09:00",
+        "close": "19:00"
+      },
+      {
+        "dayOfWeek": "SATURDAY",
+        "open": "09:00",
+        "close": "19:00"
+      }
+    ],
+    "isPartner": false
+  },
+  {
+    "id": "h11",
+    "name": "테스트 동물병원 K",
+    "lat": 37.50451,
+    "lng": 126.89994,
+    "address": "서울 관악구 테스트로 11",
+    "phone": "010-0000-0011",
+    "is24Hours": false,
+    "weeklyHours": [
+      {
+        "dayOfWeek": "MONDAY",
+        "open": "08:30",
+        "close": "21:30"
+      },
+      {
+        "dayOfWeek": "TUESDAY",
+        "open": "08:30",
+        "close": "21:30"
+      },
+      {
+        "dayOfWeek": "WEDNESDAY",
+        "open": "08:30",
+        "close": "21:30"
+      },
+      {
+        "dayOfWeek": "THURSDAY",
+        "open": "08:30",
+        "close": "21:30"
+      },
+      {
+        "dayOfWeek": "FRIDAY",
+        "open": "08:30",
+        "close": "21:30"
+      },
+      {
+        "dayOfWeek": "SATURDAY",
+        "open": "08:30",
+        "close": "21:30"
+      },
+      {
+        "dayOfWeek": "SUNDAY",
+        "open": "08:30",
+        "close": "21:30"
+      }
+    ],
+    "isPartner": false
+  },
+  {
+    "id": "h12",
+    "name": "테스트 동물병원 L",
+    "lat": 37.5663,
+    "lng": 127.13588,
+    "address": "서울 광진구 테스트로 12",
+    "phone": "010-0000-0012",
+    "is24Hours": false,
+    "weeklyHours": [
+      {
+        "dayOfWeek": "MONDAY",
+        "open": "10:00",
+        "close": "23:00"
+      },
+      {
+        "dayOfWeek": "TUESDAY",
+        "open": "10:00",
+        "close": "23:00"
+      },
+      {
+        "dayOfWeek": "WEDNESDAY",
+        "open": "10:00",
+        "close": "23:00"
+      },
+      {
+        "dayOfWeek": "THURSDAY",
+        "open": "10:00",
+        "close": "23:00"
+      },
+      {
+        "dayOfWeek": "FRIDAY",
+        "open": "10:00",
+        "close": "23:00"
+      },
+      {
+        "dayOfWeek": "SATURDAY",
+        "open": "10:00",
+        "close": "23:00"
+      },
+      {
+        "dayOfWeek": "SUNDAY",
+        "open": "10:00",
+        "close": "23:00"
+      }
+    ],
+    "isPartner": false
+  }
+]

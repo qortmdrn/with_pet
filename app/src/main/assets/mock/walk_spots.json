@@ -1,0 +1,167 @@
+[
+  {
+    "id": "w01",
+    "name": "테스트 반려견 놀이터 A",
+    "type": "DOG_PARK",
+    "lat": 37.57531,
+    "lng": 126.9779,
+    "leashRequired": false,
+    "hasWasteBin": true,
+    "hasWater": true,
+    "largeDogAllowed": true
+  },
+  {
+    "id": "w02",
+    "name": "테스트 공원 B",
+    "type": "PARK",
+    "lat": 37.57828,
+    "lng": 126.99411,
+    "leashRequired": true,
+    "hasWasteBin": true,
+    "hasWater": false,
+    "largeDogAllowed": false
+  },
+  {
+    "id": "w03",
+    "name": "테스트 산책로 C",
+    "type": "TRAIL",
+    "lat": 37.56448,
+    "lng": 127.01078,
+    "leashRequired": true,
+    "hasWasteBin": false,
+    "hasWater": true,
+    "largeDogAllowed": false
+  },
+  {
+    "id": "w04",
+    "name": "테스트 공터 D",
+    "type": "OPEN_FIELD",
+    "lat": 37.53934,
+    "lng": 127.00544,
+    "leashRequired": true,
+    "hasWasteBin": true,
+    "hasWater": false,
+    "largeDogAllowed": true
+  },
+  {
+    "id": "w05",
+    "name": "테스트 쉼터 E",
+    "type": "REST_AREA",
+    "lat": 37.52348,
+    "lng": 126.97031,
+    "leashRequired": true,
+    "hasWasteBin": true,
+    "hasWater": true,
+    "largeDogAllowed": false
+  },
+  {
+    "id": "w06",
+    "name": "테스트 반려견 놀이터 F",
+    "type": "DOG_PARK",
+    "lat": 37.53659,
+    "lng": 126.92437,
+    "leashRequired": false,
+    "hasWasteBin": false,
+    "hasWater": false,
+    "largeDogAllowed": false
+  },
+  {
+    "id": "w07",
+    "name": "테스트 공원 G",
+    "type": "PARK",
+    "lat": 37.57885,
+    "lng": 126.90341,
+    "leashRequired": true,
+    "hasWasteBin": true,
+    "hasWater": true,
+    "largeDogAllowed": true
+  },
+  {
+    "id": "w08",
+    "name": "테스트 산책로 H",
+    "type": "TRAIL",
+    "lat": 37.62538,
+    "lng": 126.93312,
+    "leashRequired": true,
+    "hasWasteBin": true,
+    "hasWater": false,
+    "largeDogAllowed": false
+  },
+  {
+    "id": "w09",
+    "name": "테스트 공터 I",
+    "type": "OPEN_FIELD",
+    "lat": 37.64078,
+    "lng": 127.00484,
+    "leashRequired": true,
+    "hasWasteBin": false,
+    "hasWater": true,
+    "largeDogAllowed": false
+  },
+  {
+    "id": "w10",
+    "name": "테스트 쉼터 J",
+    "type": "REST_AREA",
+    "lat": 37.60536,
+    "lng": 127.07461,
+    "leashRequired": true,
+    "hasWasteBin": true,
+    "hasWater": false,
+    "largeDogAllowed": false
+  },
+  {
+    "id": "w11",
+    "name": "테스트 반려견 놀이터 K",
+    "type": "DOG_PARK",
+    "lat": 37.53395,
+    "lng": 127.09004,
+    "leashRequired": false,
+    "hasWasteBin": true,
+    "hasWater": true,
+    "largeDogAllowed": true
+  },
+  {
+    "id": "w12",
+    "name": "테스트 공원 L",
+    "type": "PARK",
+    "lat": 37.47135,
+    "lng": 127.02875,
+    "leashRequired": true,
+    "hasWasteBin": false,
+    "hasWater": false,
+    "largeDogAllowed": false
+  },
+  {
+    "id": "w13",
+    "name": "테스트 산책로 M",
+    "type": "TRAIL",
+    "lat": 37.46425,
+    "lng": 126.92058,
+    "leashRequired": true,
+    "hasWasteBin": true,
+    "hasWater": true,
+    "largeDogAllowed": false
+  },
+  {
+    "id": "w14",
+    "name": "테스트 공터 N",
+    "type": "OPEN_FIELD",
+    "lat": 37.52714,
+    "lng": 126.83443,
+    "leashRequired": true,
+    "hasWasteBin": true,
+    "hasWater": false,
+    "largeDogAllowed": true
+  },
+  {
+    "id": "w15",
+    "name": "테스트 쉼터 O",
+    "type": "REST_AREA",
+    "lat": 37.62678,
+    "lng": 126.83439,
+    "leashRequired": true,
+    "hasWasteBin": false,
+    "hasWater": true,
+    "largeDogAllowed": false
+  }
+]

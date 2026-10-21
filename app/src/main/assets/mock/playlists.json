@@ -1,0 +1,71 @@
+[
+  {
+    "situation": "DEPARTURE",
+    "title": "출발할 때",
+    "tracks": [
+      {
+        "id": "dep1",
+        "title": "잔잔한 출발",
+        "rawResName": "calm_placeholder_silence"
+      },
+      {
+        "id": "dep2",
+        "title": "부드러운 바람",
+        "rawResName": "calm_placeholder_silence"
+      }
+    ]
+  },
+  {
+    "situation": "LONG_DRIVE",
+    "title": "장거리 이동",
+    "tracks": [
+      {
+        "id": "long1",
+        "title": "느린 파도",
+        "rawResName": "calm_placeholder_silence"
+      },
+      {
+        "id": "long2",
+        "title": "숲속 오후",
+        "rawResName": "calm_placeholder_silence"
+      },
+      {
+        "id": "long3",
+        "title": "고요한 들판",
+        "rawResName": "calm_placeholder_silence"
+      }
+    ]
+  },
+  {
+    "situation": "TO_HOSPITAL",
+    "title": "병원 가는 길",
+    "tracks": [
+      {
+        "id": "hos1",
+        "title": "괜찮아",
+        "rawResName": "calm_placeholder_silence"
+      },
+      {
+        "id": "hos2",
+        "title": "천천히 숨쉬기",
+        "rawResName": "calm_placeholder_silence"
+      }
+    ]
+  },
+  {
+    "situation": "RETURN_HOME",
+    "title": "집에 가는 길",
+    "tracks": [
+      {
+        "id": "home1",
+        "title": "포근한 저녁",
+        "rawResName": "calm_placeholder_silence"
+      },
+      {
+        "id": "home2",
+        "title": "따뜻한 담요",
+        "rawResName": "calm_placeholder_silence"
+      }
+    ]
+  }
+]
