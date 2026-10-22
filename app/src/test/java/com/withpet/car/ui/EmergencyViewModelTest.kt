@@ -79,7 +79,7 @@ class EmergencyViewModelTest {
         assertTrue(selection.auto)
         assertEquals(true, selection.result?.guidanceStarted)
         coVerify(exactly = 1) { navigation.startGuidance(near.location, near.name) }
-        coVerify(exactly = 1) { dialer.call(near.phone) }
+        coVerify(exactly = 1) { dialer.call(near.phone!!) }
     }
 
     @Test

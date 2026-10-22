@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 data class CallAndNavigateResult(
-    /** 휴대폰 미연결 또는 발신 실패. UI는 번호를 크게 보여 준다. */
+    /** false: 휴대폰 미연결·발신 실패·번호 없음. UI는 번호를 크게 보여 준다(있으면). */
     val callStarted: Boolean,
     val guidanceStarted: Boolean,
 )
@@ -25,7 +25,8 @@ class CallHospitalAndNavigateUseCase @Inject constructor(
         }
         val call = async {
             val capable = runCatching { dialer.isCallCapable().first() }.getOrDefault(false)
-            capable && runCatching { dialer.call(hospital.phone).getOrThrow() }.isSuccess
+            val phone = hospital.phone ?: return@async false
+            capable && runCatching { dialer.call(phone).getOrThrow() }.isSuccess
         }
         CallAndNavigateResult(callStarted = call.await(), guidanceStarted = guidance.await())
     }

@@ -61,7 +61,7 @@
 
 광고, 도착 예고 전송, 펫 진료 카드 전송, 주행 코칭, 멀미 일지, 모바일 앱 동기화, 음성 펫 비서(LLM), 차내 방치 경고, 커머스·구독, 영상 재생, 병원 파트너 콘솔, 실서버 연동.
 
-> MVP의 병원·장소 데이터는 **로컬 목업 JSON**으로 시작한다. 서버 연동은 데이터 소스 인터페이스 뒤에서 나중에 교체한다.
+> 병원·동반 장소 데이터는 공공데이터 CSV를 변환한 **로컬 JSON**(`assets/data`)을 쓴다. 산책 스팟·플레이리스트는 목업 JSON. 서버 연동은 데이터 소스 인터페이스 뒤에서 나중에 교체한다.
 
 ---
 
@@ -145,8 +145,8 @@ withpet/
 │       │   │   ├── driving/             # DrivingStateProvider
 │       │   │   └── voice/               # VoiceCommandSource
 │       │   └── media/                   # CalmPlaybackService (MediaSessionService)
-│       ├── main/assets/mock/            # hospitals.json, walk_spots.json, playlists.json (목업)
-│       ├── main/assets/data/            # pet_places.json (공공데이터 변환본, scripts/build_pet_places.py)
+│       ├── main/assets/mock/            # walk_spots.json, playlists.json (목업)
+│       ├── main/assets/data/            # hospitals.json, pet_places.json (공공데이터 변환본, scripts/build_public_data.py)
 │       ├── main/res/raw/                # 안정 사운드 샘플 음원 (저작권 확보된 것만)
 │       ├── fake/                        # Fake 어댑터 바인딩
 │       └── pleos/                       # Pleos SDK 어댑터 바인딩
@@ -319,11 +319,13 @@ enum class CalmSituation { DEPARTURE, LONG_DRIVE, TO_HOSPITAL, RETURN_HOME }
 
 **진입:** 응급 버튼 터치 또는 `VoiceCommand.Emergency`
 
+**데이터:** 공공데이터 "반려동물 동반 가능 문화시설"의 동물병원 (중복 제거 후 약 4,500곳, `assets/data/hospitals.json`). 앱 시작 때 미리 읽는다(`DataPreloader`). 진료 시간은 `OpeningHoursParser`의 strict 모드로 해석한다: "N째주"·"마지막주" 휴진이 있으면 UNKNOWN. 공휴일 휴진은 반영하지 못한다. 24시는 7일 모두 00:00~24:00인 병원. 전화번호가 없는 병원(약 4%)은 길 안내만 하고 "등록된 전화번호가 없어요"를 표시한다.
+
 **동작**
 
 1. 현재 위치 기준 반경 20km 이내 병원을 조회한다.
 2. 각 병원의 `OpenStatus`를 현재 시각으로 계산한다 (`is24Hours`면 OPEN, `weeklyHours` 비면 UNKNOWN).
-3. ETA를 계산한다 (`NavigationController.estimateEtaMinutes`, 실패 시 직선거리 기반 추정).
+3. ETA를 계산한다 (`NavigationController.estimateEtaMinutes`, 실패 시 직선거리 기반 추정). 도심은 반경 안 병원이 수백 곳이므로 상태별로 직선거리가 가까운 10곳만 계산한다.
 4. 정렬: OPEN 먼저 → UNKNOWN → (CLOSED 제외). 같은 그룹 안에서는 ETA 오름차순. 최대 3곳.
 5. 각 항목: 병원명, ETA(분), 24시 배지, 진료 상태 ("진료 중" / "진료 시간 미확인 · 전화 확인 필요").
 6. 항목 선택 시 **동시에**: `PhoneDialer.call()` + `NavigationController.startGuidance()`.
@@ -338,7 +340,7 @@ enum class CalmSituation { DEPARTURE, LONG_DRIVE, TO_HOSPITAL, RETURN_HOME }
 
 **수용 기준**
 
-- 응급 버튼 터치 후 결과(또는 목록) 표시까지 2초 이내 (목업 데이터 기준)
+- 응급 버튼 터치 후 결과(또는 목록) 표시까지 2초 이내
 - 진료 중 병원이 있으면 응급 버튼부터 전화·길 안내 시작까지 터치 1회, 목록에서 고를 때도 병원 선택 1회
 - 주행 중에도 이 화면은 전체 기능 사용 가능
 
@@ -394,7 +396,7 @@ OFF 시: 창문 원위치(진입 전 값 저장해 두었다가 복원), 안정 
 
 ### 7-8. 반려동물 동반 장소 (`ui/place`) — F8
 
-**데이터:** 공공데이터 "반려동물 동반 가능 문화시설"(`data/facilities_with_pet.csv`) 중 카페·식당 / 여행지 / 문화시설(박물관·미술관·문예회관)이면서 `반려동물 동반 가능정보 = Y`인 곳. `scripts/build_pet_places.py`로 `assets/data/pet_places.json`을 만들어 앱에 포함한다. 동물병원·약국·펜션은 제외.
+**데이터:** 공공데이터 "반려동물 동반 가능 문화시설"(`data/facilities_with_pet.csv`) 중 카페·식당 / 여행지 / 문화시설(박물관·미술관·문예회관)이면서 `반려동물 동반 가능정보 = Y`인 곳. `scripts/build_public_data.py`로 `assets/data/pet_places.json`을 만들어 앱에 포함한다. 동물병원·약국·펜션은 제외.
 
 **진입:** 홈의 "동반 장소" 버튼 (정차 시에만 표시 — 주행 중 홈 주요 버튼 3개 제한)
 
@@ -432,8 +434,8 @@ OFF 시: 창문 원위치(진입 전 값 저장해 두었다가 복원), 안정 
 | 항목 | 기준 |
 | --- | --- |
 | 안전 | 7장 공통 UI 규칙 준수, 응급 모드 광고 금지, 원격 진료 오해 문구 금지 |
-| 성능 | 앱 콜드 스타트 2초 이내, 응급 목록 2초 이내 (목업 기준) |
-| 오프라인 | 목업 데이터는 로컬이므로 네트워크 없이 전 기능 동작 |
+| 성능 | 앱 콜드 스타트 2초 이내, 응급 목록 2초 이내 (공공데이터는 앱 시작 때 미리 로드) |
+| 오프라인 | 병원·장소·목업 데이터 모두 로컬이므로 네트워크 없이 전 기능 동작 |
 | 개인정보 | 위치는 기기 안에서만 사용, 외부 전송 없음 (MVP). 위치 권한 요청 시 사용 목적 표시 |
 | 접근성 | 텍스트 최소 24sp (주행 중 화면), 색만으로 상태 구분 금지 (배지 텍스트 병기) |
 | 로그 | 개인정보·위치 좌표를 로그에 남기지 않음 |
@@ -442,9 +444,8 @@ OFF 시: 창문 원위치(진입 전 값 저장해 두었다가 복원), 안정 
 
 ## 10. 목업 데이터
 
-`app/src/main/assets/mock/`에 생성한다. **실제 병원명·전화번호를 쓰지 않는다.** 이름은 "테스트 동물병원 A", 번호는 `010-0000-000X` 형식의 가짜 값.
+`app/src/main/assets/mock/`에 생성한다. 병원은 목업 대신 공공데이터(7-2)를 쓴다. **병원 번호가 실제 번호이므로** fake 빌드의 `FakePhoneDialer`는 발신하지 않고 기록·토스트만 한다.
 
-- `hospitals.json`: 서울 시청 반경 15km 안에 12곳. 24시 3곳, 진료 시간 미확인 2곳, 야간 마감 7곳. 제휴(`isPartner`) 4곳.
 - `walk_spots.json`: 같은 반경에 15곳. 유형별로 고르게, 대형견 가능 5곳.
 - `playlists.json`: 상황별 2~3곡, 음원은 `res/raw` 파일명 참조.
 

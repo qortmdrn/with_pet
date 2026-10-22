@@ -60,6 +60,14 @@ class OpeningHoursParserTest {
     }
 
     @Test
+    fun `strict 모드 - 특정 주에만 쉬는 휴무가 있으면 미확인`() {
+        assertNull(OpeningHoursParser.parse("매일 09:00~18:00", "4째주 월요일", strict = true))
+        assertNull(OpeningHoursParser.parse("매일 09:00~18:00", "매주 일요일, 마지막주 수요일", strict = true))
+        // 공휴일은 strict여도 무시 (요일로 표현 불가)
+        assertEquals(6, OpeningHoursParser.parse("매일 09:00~18:00", "매주 일요일, 법정공휴일", strict = true)!!.size)
+    }
+
+    @Test
     fun `해석할 수 없으면 null`() {
         assertNull(OpeningHoursParser.parse("정보없음", null))
         assertNull(OpeningHoursParser.parse(null, null))

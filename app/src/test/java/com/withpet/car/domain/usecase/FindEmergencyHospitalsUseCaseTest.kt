@@ -114,6 +114,22 @@ class FindEmergencyHospitalsUseCaseTest {
     }
 
     @Test
+    fun `병원이 많아도 상태별로 가까운 곳만 ETA를 구한다`() = runTest {
+        var etaCalls = 0
+        val counting = object : NavigationController by Nav(emptyMap()) {
+            override suspend fun estimateEtaMinutes(destination: GeoPoint): Result<Int> {
+                etaCalls++
+                return Result.failure(IllegalStateException())
+            }
+        }
+        val many = (1..200).map { hospital("h$it", CITY_HALL.north(it * 0.05), is24Hours = true) }
+        val result = FindEmergencyHospitalsUseCase(Repo(many), counting, clock)(CITY_HALL)
+
+        assertEquals(FindEmergencyHospitalsUseCase.ETA_POOL_PER_STATUS, etaCalls)
+        assertEquals(listOf("h1", "h2", "h3"), result.candidates.map { it.hospital.id })
+    }
+
+    @Test
     fun `rank는 CLOSED를 제외한다`() {
         val h = hospital("x")
         val ranked = FindEmergencyHospitalsUseCase.rank(

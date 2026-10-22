@@ -18,7 +18,7 @@ debug APK는 아이콘 라이브러리 때문에 60MB 이상이다. 콜드 스�
 | 패키지 | 역할 |
 | --- | --- |
 | `domain` | 모델, Repository 인터페이스, UseCase, 순수 로직 (진료 상태, 응급 정렬, 휴식 알림 규칙) |
-| `data` | 목업 JSON(`assets/mock`) Repository, Room(프로필), DataStore(설정) |
+| `data` | 공공데이터 변환 JSON(`assets/data`: 병원·동반 장소), 목업 JSON(`assets/mock`: 산책·플레이리스트), Room(프로필), DataStore(설정) |
 | `platform` | 차량·내비·위치·전화·주행·음성 어댑터 인터페이스와 Fake 구현 |
 | `media` | `CalmPlaybackService`(MediaSessionService) |
 | `ui` | Compose 화면 |
@@ -58,17 +58,18 @@ debug APK는 아이콘 라이브러리 때문에 60MB 이상이다. 콜드 스�
 - `Vehicle.initialize()` 직후 바로 호출해도 되는지 (서비스 바인딩 지연)
 - `requestNavigationScreen(SearchPlace("애견동반 카페"))`가 내비 검색 화면을 앞으로 띄우는지, 검색 결과가 쓸 만한지 (키워드 조정 필요할 수 있음)
 
-## 반려동물 동반 장소 데이터
+## 공공데이터 (병원·동반 장소)
 
-`app/src/main/assets/data/pet_places.json`은 공공데이터 "반려동물 동반 가능 문화시설" CSV를 변환한 것이다. 원본이 바뀌면 다시 만든다.
+`app/src/main/assets/data/`의 JSON은 공공데이터 "반려동물 동반 가능 문화시설" CSV를 변환한 것이다. 원본 CSV(30MB)는 저장소에 넣지 않는다(`.gitignore`). 원본이 바뀌면 `data/`에 넣고 다시 만든다.
 
 ```bash
-python3 scripts/build_pet_places.py data/facilities_with_pet.csv app/src/main/assets/data/pet_places.json
-./gradlew testFakeDebugUnitTest --tests '*PetPlaceAssetTest*'   # 종류별 개수·좌표·운영시간 해석률(85% 이상) 검증
+python3 scripts/build_public_data.py data/facilities_with_pet.csv app/src/main/assets/data
+./gradlew testFakeDebugUnitTest --tests '*AssetTest*'   # 개수·좌표·전화번호 형식·운영시간 해석률 검증
 ```
 
-- 카페·식당 / 여행지 / 문화시설 중 동반 가능(Y)만 남긴다 (약 1,900곳, 700KB). 동물병원·약국·펜션은 제외.
-- 운영시간·휴무일은 원문 그대로 두고 앱의 `OpeningHoursParser`가 해석한다 (현재 약 93% 해석).
+- `hospitals.json`: 동물병원 (CSV에 같은 병원이 약 3번씩 반복되어 중복 제거 후 약 4,500곳, 1.1MB). 응급 모드에서 쓴다.
+- `pet_places.json`: 카페·식당 / 여행지 / 문화시설 중 동반 가능(Y)만 (약 1,900곳, 700KB). 약국·펜션은 제외.
+- 운영시간·휴무일은 원문 그대로 두고 앱의 `OpeningHoursParser`가 해석한다 (동반 장소 약 93%, 병원 약 59% — 병원은 운영시간 "정보없음"이 많고, "N째주" 휴진은 미확인으로 처리).
 - 출처 표기와 이용 조건(공공누리 유형 등)은 원본 제공처 기준으로 확인 필요. 화면에는 출처 문구를 표시한다.
 
 ## 남은 일 (13장 확인 필요)
@@ -79,6 +80,7 @@ python3 scripts/build_pet_places.py data/facilities_with_pet.csv app/src/main/as
   - 발신은 블루투스로 연결된 운전자 휴대폰 회선으로 나가야 한다 (병원에는 운전자 번호가 표시됨). 차량 통신 모듈 회선이 아닌지 확인
   - 오터치로 의도치 않은 발신이 생길 수 있다. 필요하면 자동 선택 시 길 안내만 하고 전화는 버튼으로 거는 방식 검토
   - "다른 병원 보기"로 다시 고르면 두 번째 발신이 나가며, 먼저 건 통화는 앱이 끊지 않는다
-  - 병원 번호는 아직 목업(`assets/mock/hospitals.json`, 010-0000-XXXX). 실데이터 연결 전 실제 번호로 발신되지 않게 주의
+  - 병원 번호는 **실제 번호**(`assets/data/hospitals.json`)다. 지금은 fake 빌드는 토스트만, pleos 빌드는 미구현이라 발신되지 않지만, 다이얼러를 실제로 연동하는 순간 테스트 중에도 실제 병원으로 전화가 나간다. 연동 전에 테스트용 발신 차단 방안을 정할 것
+  - 공휴일 휴진은 반영하지 못해 공휴일에 닫은 병원이 "진료 중"으로 나올 수 있다 (자동 선택 대상이 될 수 있음)
 - 안정 사운드 음원: 지금은 `res/raw/calm_placeholder_silence.wav`(무음) 하나를 모든 곡이 가리킨다
 - 패키지명 확정, 릴리스 서명

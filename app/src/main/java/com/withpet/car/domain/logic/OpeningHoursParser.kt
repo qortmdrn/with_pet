@@ -13,7 +13,8 @@ import java.time.LocalTime
  * - 휴무일: "연중무휴", "매주 월요일", "매주 토, 일", "매주 월~금"
  *
  * 계절별 시간(하절기·3~10월), "일몰", "변동" 등은 null(미확인)을 돌려준다.
- * 공휴일·명절·"N째주" 휴무는 요일 단위로 표현할 수 없어 무시한다 (화면에서 원문을 함께 보여 준다).
+ * 공휴일·명절 휴무는 요일 단위로 표현할 수 없어 무시한다 (화면에서 원문을 함께 보여 준다).
+ * "N째주"·"마지막주" 휴무는 [strict]가 false면 무시하고, true면 null(미확인)을 돌려준다.
  */
 object OpeningHoursParser {
 
@@ -31,9 +32,15 @@ object OpeningHoursParser {
     private val seasonal = Regex("하절기|동절기|\\d+\\s*~\\s*\\d+\\s*월")
 
     // 요일 단위가 아닌 휴무 (무시)
-    private val ignoredClosed = listOf("설", "추석", "1월1일", "공휴일", "연휴", "째주", "마지막주", "개교기념일")
+    private val holidayClosed = listOf("설", "추석", "1월1일", "공휴일", "연휴", "개교기념일")
+    // 특정 주에만 쉬는 휴무: 그 요일이 쉬는 날인지 날짜 없이는 알 수 없다
+    private val partialWeekClosed = listOf("째주", "마지막주")
 
-    fun parse(hours: String?, closedDays: String?): List<OpeningHours>? {
+    /**
+     * @param strict 응급 모드처럼 잘못된 "영업 중"이 위험한 곳에서 true.
+     *   특정 주에만 쉬는 휴무가 있으면 해석하지 않는다.
+     */
+    fun parse(hours: String?, closedDays: String?, strict: Boolean = false): List<OpeningHours>? {
         val line = hours?.normalize() ?: return null
         if (!hoursLine.matches(line)) return null
 
@@ -47,12 +54,12 @@ object OpeningHoursParser {
             targetDays.forEach { byDay[it] = OpeningHours(it, openTime, closeTime) }
         }
 
-        val closed = parseClosedDays(closedDays) ?: return null
+        val closed = parseClosedDays(closedDays, strict) ?: return null
         return byDay.values.filter { it.dayOfWeek !in closed }.sortedBy { it.dayOfWeek }
     }
 
     /** 쉬는 요일. 해석할 수 없는 내용이 있으면 null. */
-    private fun parseClosedDays(text: String?): Set<DayOfWeek>? {
+    private fun parseClosedDays(text: String?, strict: Boolean): Set<DayOfWeek>? {
         val line = text?.normalize() ?: return emptySet()
         if (line == "연중무휴") return emptySet()
 
@@ -68,7 +75,8 @@ object OpeningHoursParser {
                 weekly && bareDays.matches(token) -> closed += parseDays(token)
                 // "동절기 매주 월", "12~2월"처럼 기간이 붙은 휴무나 형식이 어긋난 '매주'는 해석하지 않는다
                 seasonal.containsMatchIn(token) || "매주" in token -> return null
-                ignoredClosed.any { it in token } -> weekly = false
+                partialWeekClosed.any { it in token } -> if (strict) return null else weekly = false
+                holidayClosed.any { it in token } -> weekly = false
                 else -> return null
             }
         }

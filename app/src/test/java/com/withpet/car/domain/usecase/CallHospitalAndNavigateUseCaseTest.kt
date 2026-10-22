@@ -31,7 +31,7 @@ class CallHospitalAndNavigateUseCaseTest {
         val result = CallHospitalAndNavigateUseCase(dialer, nav)(h)
 
         assertEquals(CallAndNavigateResult(callStarted = true, guidanceStarted = true), result)
-        coVerify { dialer.call(h.phone) }
+        coVerify { dialer.call(h.phone!!) }
         coVerify { nav.startGuidance(h.location, h.name) }
     }
 
@@ -43,6 +43,15 @@ class CallHospitalAndNavigateUseCaseTest {
         assertEquals(CallAndNavigateResult(callStarted = false, guidanceStarted = true), result)
         coVerify(exactly = 0) { dialer.call(any()) }
         coVerify { nav.startGuidance(GeoPoint(h.location.lat, h.location.lng), h.name) }
+    }
+
+    @Test
+    fun `전화번호가 없으면 전화는 하지 않고 길 안내는 시작한다`() = runTest {
+        val dialer = mockk<PhoneDialer> { every { isCallCapable() } returns flowOf(true) }
+        val result = CallHospitalAndNavigateUseCase(dialer, nav)(h.copy(phone = null))
+
+        assertEquals(CallAndNavigateResult(callStarted = false, guidanceStarted = true), result)
+        coVerify(exactly = 0) { dialer.call(any()) }
     }
 
     @Test

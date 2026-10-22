@@ -51,10 +51,13 @@ class FindEmergencyHospitalsUseCase @Inject constructor(
         now: LocalDateTime,
     ): List<HospitalCandidate> = coroutineScope {
         hospitals
-            .filter { origin.distanceKmTo(it.location) <= radiusKm }
-            .map { it to OpenStatusCalculator.statusAt(it, now) }
-            .filter { (_, status) -> status != OpenStatus.CLOSED }
-            .map { (hospital, status) ->
+            .map { Triple(it, origin.distanceKmTo(it.location), OpenStatusCalculator.statusAt(it, now)) }
+            .filter { (_, distance, status) -> distance <= radiusKm && status != OpenStatus.CLOSED }
+            // 도심 반경에는 병원이 수백 곳이라, 상태별로 직선거리가 가까운 곳만 ETA를 구한다
+            .groupBy { (_, _, status) -> status }
+            .values
+            .flatMap { group -> group.sortedBy { (_, distance, _) -> distance }.take(ETA_POOL_PER_STATUS) }
+            .map { (hospital, _, status) ->
                 async { HospitalCandidate(hospital, status, eta(origin, hospital)) }
             }
             .awaitAll()
@@ -68,6 +71,8 @@ class FindEmergencyHospitalsUseCase @Inject constructor(
         const val PRIMARY_RADIUS_KM = 20.0
         const val EXPANDED_RADIUS_KM = 50.0
         const val MAX_CANDIDATES = 3
+        /** ETA 순 정렬 후보. 직선거리와 ETA 순서가 크게 어긋나지 않는다는 가정 */
+        const val ETA_POOL_PER_STATUS = 10
 
         /** OPEN 먼저 → UNKNOWN, CLOSED 제외. 같은 그룹 안에서는 ETA 오름차순. 최대 3곳. */
         fun rank(candidates: List<HospitalCandidate>): List<HospitalCandidate> =

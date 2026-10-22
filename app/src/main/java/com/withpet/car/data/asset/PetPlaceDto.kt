@@ -6,7 +6,7 @@ import com.withpet.car.domain.model.PetPlace
 import com.withpet.car.domain.model.PetPlaceCategory
 import kotlinx.serialization.Serializable
 
-/** assets/data/pet_places.json 한 항목. scripts/build_pet_places.py가 만든다. */
+/** assets/data/pet_places.json 한 항목. scripts/build_public_data.py가 만든다. */
 @Serializable
 data class PetPlaceDto(
     val id: String,

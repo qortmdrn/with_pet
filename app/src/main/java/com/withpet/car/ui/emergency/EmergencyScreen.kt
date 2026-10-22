@@ -138,7 +138,7 @@ private fun HospitalItem(candidate: HospitalCandidate, onSelect: (HospitalCandid
                 Row(Modifier.padding(horizontal = 20.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.Call, contentDescription = null, modifier = Modifier.size(32.dp))
                     Spacer(Modifier.width(10.dp))
-                    Text("병원에 전화하고 길 안내", style = MaterialTheme.typography.labelLarge)
+                    Text(if (hospital.phone != null) "병원에 전화하고 길 안내" else "길 안내", style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
@@ -164,6 +164,7 @@ private fun SelectionPanel(selection: EmergencySelection, onBackToList: () -> Un
         when {
             result == null -> CircularProgressIndicator()
             result.callStarted -> Line(Icons.Filled.Call, "전화를 연결하고 있어요")
+            hospital.phone == null -> Text("등록된 전화번호가 없어요", style = MaterialTheme.typography.titleMedium)
             else -> {
                 // 휴대폰 미연결: 번호를 크게 보여 준다
                 Text(hospital.phone, fontSize = 56.sp, fontWeight = FontWeight.Bold, color = WithPetColors.Primary)

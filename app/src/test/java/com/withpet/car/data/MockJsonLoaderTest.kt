@@ -18,20 +18,6 @@ class MockJsonLoaderTest {
     }
 
     @Test
-    fun `병원 12곳 - 24시 3, 미확인 2, 야간 마감 7, 제휴 4, 반경 15km`() {
-        val hospitals = loader.hospitals().map { it.toDomain() }
-        assertEquals(12, hospitals.size)
-        assertEquals(3, hospitals.count { it.is24Hours })
-        assertEquals(2, hospitals.count { !it.is24Hours && it.weeklyHours.isEmpty() })
-        assertEquals(7, hospitals.count { !it.is24Hours && it.weeklyHours.isNotEmpty() })
-        assertEquals(4, hospitals.count { it.isPartner })
-        assertTrue(hospitals.all { CITY_HALL.distanceKmTo(it.location) <= 15.0 })
-        // 실제 병원명·번호 금지
-        assertTrue(hospitals.all { it.name.startsWith("테스트 동물병원") })
-        assertTrue(hospitals.all { it.phone.startsWith("010-0000-") })
-    }
-
-    @Test
     fun `산책 스팟 15곳 - 유형별 고르게, 대형견 가능 5곳, 반경 15km`() {
         val spots = loader.walkSpots().map { it.toDomain() }
         assertEquals(15, spots.size)

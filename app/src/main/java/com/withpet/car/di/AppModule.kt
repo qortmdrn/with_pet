@@ -8,7 +8,7 @@ import androidx.room.Room
 import com.withpet.car.data.local.DataStoreSettingsRepository
 import com.withpet.car.data.local.PetDatabase
 import com.withpet.car.data.mock.MockJsonLoader
-import com.withpet.car.data.repository.MockHospitalRepository
+import com.withpet.car.data.repository.AssetHospitalRepository
 import com.withpet.car.data.repository.AssetPetPlaceRepository
 import com.withpet.car.data.repository.MockPlaylistRepository
 import com.withpet.car.data.repository.MockWalkSpotRepository
@@ -36,6 +36,8 @@ import kotlinx.serialization.json.Json
 import java.time.Clock
 import javax.inject.Singleton
 
+private fun Context.readAsset(path: String): String = assets.open(path).bufferedReader().use { it.readText() }
+
 private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 @Module
@@ -60,8 +62,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun hospitalRepository(loader: MockJsonLoader): HospitalRepository =
-        MockHospitalRepository(loader, Dispatchers.IO)
+    fun hospitalRepository(@ApplicationContext context: Context): HospitalRepository =
+        AssetHospitalRepository(Json { ignoreUnknownKeys = true }, { context.readAsset(AssetHospitalRepository.ASSET_PATH) }, Dispatchers.IO)
 
     @Provides
     @Singleton
@@ -71,9 +73,7 @@ object AppModule {
     @Provides
     @Singleton
     fun petPlaceRepository(@ApplicationContext context: Context): PetPlaceRepository =
-        AssetPetPlaceRepository(Json { ignoreUnknownKeys = true }, {
-            context.assets.open(AssetPetPlaceRepository.ASSET_PATH).bufferedReader().use { it.readText() }
-        }, Dispatchers.IO)
+        AssetPetPlaceRepository(Json { ignoreUnknownKeys = true }, { context.readAsset(AssetPetPlaceRepository.ASSET_PATH) }, Dispatchers.IO)
 
     @Provides
     @Singleton

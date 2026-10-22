@@ -4,42 +4,9 @@ import com.withpet.car.domain.model.CalmPlaylist
 import com.withpet.car.domain.model.CalmSituation
 import com.withpet.car.domain.model.CalmTrack
 import com.withpet.car.domain.model.GeoPoint
-import com.withpet.car.domain.model.Hospital
-import com.withpet.car.domain.model.OpeningHours
 import com.withpet.car.domain.model.WalkSpot
 import com.withpet.car.domain.model.WalkSpotType
 import kotlinx.serialization.Serializable
-import java.time.DayOfWeek
-import java.time.LocalTime
-
-@Serializable
-data class HospitalDto(
-    val id: String,
-    val name: String,
-    val lat: Double,
-    val lng: Double,
-    val address: String,
-    val phone: String,
-    val is24Hours: Boolean,
-    val weeklyHours: List<OpeningHoursDto> = emptyList(),
-    val isPartner: Boolean = false,
-) {
-    fun toDomain() = Hospital(
-        id = id,
-        name = name,
-        location = GeoPoint(lat, lng),
-        address = address,
-        phone = phone,
-        is24Hours = is24Hours,
-        weeklyHours = weeklyHours.map { it.toDomain() },
-        isPartner = isPartner,
-    )
-}
-
-@Serializable
-data class OpeningHoursDto(val dayOfWeek: String, val open: String, val close: String) {
-    fun toDomain() = OpeningHours(DayOfWeek.valueOf(dayOfWeek), LocalTime.parse(open), LocalTime.parse(close))
-}
 
 @Serializable
 data class WalkSpotDto(

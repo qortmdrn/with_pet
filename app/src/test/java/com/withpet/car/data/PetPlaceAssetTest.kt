@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
 
-/** scripts/build_pet_places.py가 만든 실제 asset을 검증한다. */
+/** scripts/build_public_data.py가 만든 실제 asset을 검증한다. */
 class PetPlaceAssetTest {
 
     private val repository = AssetPetPlaceRepository(
