@@ -1,0 +1,38 @@
+name: Slack notify on push to main
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack message
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          COMMITS: ${{ toJson(github.event.commits) }}
+          PUSHER: ${{ github.event.pusher.name }}
+          REPO: ${{ github.repository }}
+          COMPARE_URL: ${{ github.event.compare }}
+        run: |
+          # 커밋 목록: "• <url|abc1234> 메시지 첫 줄 - 작성자"
+          commit_lines=$(echo "$COMMITS" | jq -r '.[] | "• <\(.url)|\(.id[0:7])> \(.message | split("\n")[0]) - \(.author.name)"')
+          count=$(echo "$COMMITS" | jq 'length')
+          # 커밋 없는 push(브랜치 삭제 등)는 알림 생략
+          [ "$count" -eq 0 ] && exit 0
+
+          payload=$(jq -n \
+            --arg header "🚀 *${REPO}* main 브랜치에 ${count}개 커밋 push (by ${PUSHER})" \
+            --arg commits "$commit_lines" \
+            --arg compare "$COMPARE_URL" \
+            '{
+              text: $header,
+              blocks: [
+                { type: "section", text: { type: "mrkdwn", text: $header } },
+                { type: "section", text: { type: "mrkdwn", text: $commits } },
+                { type: "context", elements: [ { type: "mrkdwn", text: "<\($compare)|변경사항 비교 보기>" } ] }
+              ]
+            }')
+
+          curl -sf -X POST -H 'Content-type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL"
