@@ -82,5 +82,5 @@ python3 scripts/build_public_data.py data/facilities_with_pet.csv app/src/main/a
   - "다른 병원 보기"로 다시 고르면 두 번째 발신이 나가며, 먼저 건 통화는 앱이 끊지 않는다
   - 병원 번호는 **실제 번호**(`assets/data/hospitals.json`)다. 지금은 fake 빌드는 토스트만, pleos 빌드는 미구현이라 발신되지 않지만, 다이얼러를 실제로 연동하는 순간 테스트 중에도 실제 병원으로 전화가 나간다. 연동 전에 테스트용 발신 차단 방안을 정할 것
   - 공휴일 휴진은 반영하지 못해 공휴일에 닫은 병원이 "진료 중"으로 나올 수 있다 (자동 선택 대상이 될 수 있음)
-- 안정 사운드 음원: 지금은 `res/raw/calm_placeholder_silence.wav`(무음) 하나를 모든 곡이 가리킨다
+- 안정 사운드 음원: 지금은 `scripts/generate_calm_sounds.py`로 합성한 임시 음원(곡당 60초 루프, AAC 64kbps, 총 약 4MB). 출시 전 실제 차량 스피커로 들어 보고, 필요하면 라이선스 음원이나 작곡으로 교체
 - 패키지명 확정, 릴리스 서명

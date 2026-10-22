@@ -370,7 +370,7 @@ enum class CalmSituation { DEPARTURE, LONG_DRIVE, TO_HOSPITAL, RETURN_HOME }
 - 주행 중 화면: 상황 선택 버튼 4개 + 재생/정지만.
 - 마지막으로 선택한 상황을 DataStore에 저장하고, 다음 실행 시 기본 선택으로 보여준다.
 - 영상은 MVP에서 제외.
-- 샘플 음원은 저작권이 확보된 파일만 사용. 없으면 무음 placeholder 파일과 TODO 주석으로 둔다.
+- 샘플 음원은 저작권이 확보된 파일만 사용. 지금은 `scripts/generate_calm_sounds.py`로 합성한 임시 음원(느린 템포·중저음·고음 감쇠, 곡당 60초 루프)을 쓴다. 유튜브 등에서 추출한 음원은 쓰지 않는다.
 
 ### 7-6. 펫 모드 — F5, F6 (`domain/usecase/StartPetModeUseCase`)
 

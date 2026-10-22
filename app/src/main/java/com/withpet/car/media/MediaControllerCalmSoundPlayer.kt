@@ -40,7 +40,7 @@ class MediaControllerCalmSoundPlayer @Inject constructor(
 
     override suspend fun play(situation: CalmSituation): Result<Unit> = runCatching {
         val playlist = requireNotNull(playlistRepository.get(situation)) { "플레이리스트 없음: $situation" }
-        // TODO(13장): 저작권이 확보된 음원으로 교체. 지금은 모든 곡이 무음 placeholder를 가리킨다.
+        // 음원은 scripts/generate_calm_sounds.py로 합성한 임시본. 출시용 음원이 정해지면 res/raw만 교체한다 (13장).
         val items = playlist.tracks.map { track ->
             MediaItem.Builder()
                 .setMediaId("${situation.name}/${track.id}")

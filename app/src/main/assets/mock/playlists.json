@@ -6,12 +6,12 @@
       {
         "id": "dep1",
         "title": "잔잔한 출발",
-        "rawResName": "calm_placeholder_silence"
+        "rawResName": "calm_departure_calm"
       },
       {
         "id": "dep2",
         "title": "부드러운 바람",
-        "rawResName": "calm_placeholder_silence"
+        "rawResName": "calm_departure_breeze"
       }
     ]
   },
@@ -22,17 +22,17 @@
       {
         "id": "long1",
         "title": "느린 파도",
-        "rawResName": "calm_placeholder_silence"
+        "rawResName": "calm_long_waves"
       },
       {
         "id": "long2",
         "title": "숲속 오후",
-        "rawResName": "calm_placeholder_silence"
+        "rawResName": "calm_long_forest"
       },
       {
         "id": "long3",
         "title": "고요한 들판",
-        "rawResName": "calm_placeholder_silence"
+        "rawResName": "calm_long_field"
       }
     ]
   },
@@ -43,12 +43,12 @@
       {
         "id": "hos1",
         "title": "괜찮아",
-        "rawResName": "calm_placeholder_silence"
+        "rawResName": "calm_hospital_okay"
       },
       {
         "id": "hos2",
         "title": "천천히 숨쉬기",
-        "rawResName": "calm_placeholder_silence"
+        "rawResName": "calm_hospital_breathe"
       }
     ]
   },
@@ -59,12 +59,12 @@
       {
         "id": "home1",
         "title": "포근한 저녁",
-        "rawResName": "calm_placeholder_silence"
+        "rawResName": "calm_home_evening"
       },
       {
         "id": "home2",
         "title": "따뜻한 담요",
-        "rawResName": "calm_placeholder_silence"
+        "rawResName": "calm_home_blanket"
       }
     ]
   }
