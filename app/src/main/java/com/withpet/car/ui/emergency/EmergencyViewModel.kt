@@ -3,6 +3,7 @@ package com.withpet.car.ui.emergency
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.withpet.car.domain.model.HospitalCandidate
+import com.withpet.car.domain.model.OpenStatus
 import com.withpet.car.domain.usecase.CallAndNavigateResult
 import com.withpet.car.domain.usecase.CallHospitalAndNavigateUseCase
 import com.withpet.car.domain.usecase.EmergencyResult
@@ -28,6 +29,8 @@ data class EmergencySelection(
     val candidate: HospitalCandidate,
     /** null이면 진행 중 */
     val result: CallAndNavigateResult?,
+    /** 목록을 거치지 않고 가장 빨리 도착하는 진료 중 병원을 자동으로 고른 경우 */
+    val auto: Boolean = false,
 )
 
 data class EmergencyUiState(
@@ -55,16 +58,23 @@ class EmergencyViewModel @Inject constructor(
             val here = withTimeoutOrNull(LOCATION_TIMEOUT_MS) { location.currentLocation().firstOrNull() }
             val list = if (here == null) EmergencyListState.NoLocation else EmergencyListState.Loaded(findHospitals(here))
             _state.update { it.copy(list = list) }
+            // 진료 중 병원이 있으면 응급 버튼 한 번으로 바로 전화·길 안내를 시작한다.
+            // 후보는 진료 중 → ETA 순이라 첫 번째가 가장 빨리 도착하는 진료 중 병원이다. 미확인 병원은 목록에서 고르게 한다.
+            (list as? EmergencyListState.Loaded)?.result?.candidates?.firstOrNull()
+                ?.takeIf { it.status == OpenStatus.OPEN }
+                ?.let { select(it, auto = true) }
         }
     }
 
     /** 터치 1회로 전화와 길 안내를 동시에 시작한다. */
-    fun select(candidate: HospitalCandidate) {
+    fun select(candidate: HospitalCandidate) = select(candidate, auto = false)
+
+    private fun select(candidate: HospitalCandidate, auto: Boolean) {
         if (_state.value.selection?.let { it.candidate == candidate && it.result == null } == true) return
-        _state.update { it.copy(selection = EmergencySelection(candidate, null)) }
+        _state.update { it.copy(selection = EmergencySelection(candidate, null, auto)) }
         viewModelScope.launch {
             val result = callAndNavigate(candidate.hospital)
-            _state.update { it.copy(selection = EmergencySelection(candidate, result)) }
+            _state.update { it.copy(selection = EmergencySelection(candidate, result, auto)) }
         }
     }
 

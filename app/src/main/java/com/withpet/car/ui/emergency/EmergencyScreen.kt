@@ -157,6 +157,9 @@ private fun SelectionPanel(selection: EmergencySelection, onBackToList: () -> Un
     val hospital = selection.candidate.hospital
     val result = selection.result
     SectionCard(Modifier.testTag(TestTags.EMERGENCY_RESULT)) {
+        if (selection.auto) {
+            Text("가장 빨리 도착하는 진료 중 병원", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         Text(hospital.name, style = MaterialTheme.typography.headlineMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
         when {
             result == null -> CircularProgressIndicator()
