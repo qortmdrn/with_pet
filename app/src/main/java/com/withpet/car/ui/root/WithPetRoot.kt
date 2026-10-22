@@ -52,6 +52,7 @@ import com.withpet.car.ui.components.BigActionButton
 import com.withpet.car.ui.components.EmergencyButton
 import com.withpet.car.ui.emergency.EmergencyScreen
 import com.withpet.car.ui.home.HomeScreen
+import com.withpet.car.ui.place.PlaceScreen
 import com.withpet.car.ui.profile.ProfileEditScreen
 import com.withpet.car.ui.profile.ProfileEditViewModel
 import com.withpet.car.ui.profile.ProfileListScreen
@@ -63,6 +64,7 @@ object Routes {
     const val HOME = "home"
     const val EMERGENCY = "emergency"
     const val WALK = "walk"
+    const val PLACE = "place"
     const val CALM = "calm"
     const val PROFILE = "profile"
     const val PROFILE_EDIT = "profile/edit/{${ProfileEditViewModel.ARG_PET_ID}}"
@@ -74,6 +76,7 @@ object Routes {
     fun title(route: String?): String = when (route) {
         EMERGENCY -> "응급 · 동물병원 찾기"
         WALK -> "산책 스팟"
+        PLACE -> "반려동물 동반 장소"
         CALM -> "안정 사운드"
         PROFILE -> "반려동물 프로필"
         PROFILE_EDIT -> "프로필 편집"
@@ -138,6 +141,7 @@ private fun AppNavHost(navController: NavHostController, restricted: Boolean) {
         composable(Routes.HOME) {
             HomeScreen(
                 onOpenWalk = { navController.navigate(Routes.WALK) },
+                onOpenPlace = { navController.navigate(Routes.PLACE) },
                 onOpenCalm = { navController.navigate(Routes.CALM) },
                 onOpenEmergency = { navController.navigate(Routes.EMERGENCY) { launchSingleTop = true } },
                 onOpenProfile = { navController.navigate(Routes.PROFILE) },
@@ -146,6 +150,7 @@ private fun AppNavHost(navController: NavHostController, restricted: Boolean) {
         }
         composable(Routes.EMERGENCY) { EmergencyScreen() }
         composable(Routes.WALK) { WalkScreen() }
+        composable(Routes.PLACE) { PlaceScreen() }
         composable(Routes.CALM) { CalmScreen() }
         composable(Routes.PROFILE) {
             ProfileListScreen(

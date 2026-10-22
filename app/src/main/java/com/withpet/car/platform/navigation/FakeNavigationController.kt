@@ -45,6 +45,16 @@ class FakeNavigationController @Inject constructor(
 
     override fun activeRoute(): Flow<RouteInfo?> = route.asStateFlow()
 
+    private val searches = MutableStateFlow<List<String>>(emptyList())
+    /** 내비 검색 화면 호출 기록 (테스트·디버그용) */
+    val searchedKeywords: StateFlow<List<String>> = searches.asStateFlow()
+
+    override suspend fun searchPlace(keyword: String): Result<Unit> {
+        searches.value += keyword
+        Log.i(TAG, "가짜 내비 검색: $keyword")
+        return Result.success(Unit)
+    }
+
     fun clearRoute() {
         route.value = null
     }

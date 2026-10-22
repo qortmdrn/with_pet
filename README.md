@@ -43,7 +43,7 @@ debug APK는 아이콘 라이브러리 때문에 60MB 이상이다. 콜드 스�
 | 어댑터 | SDK | 구현 |
 | --- | --- | --- |
 | `PleosVehicleControl` | Vehicle 2.3.2 | 온도·풍량: 지원 좌석 구역 전체에 설정. 뒷창문: 2열 창문, 0~100%를 차량 위치 범위로 변환. 쓰기 권한이 없거나 지원 구역이 없으면 `UnsupportedFeature` |
-| `PleosNavigationController` | NaviHelper 3.0.5 | `requestRoute` / `addWaypoint`(최대 2곳). ETA 조회 API가 없어 직선거리 추정으로 대체 |
+| `PleosNavigationController` | NaviHelper 3.0.5 | `requestRoute` / `addWaypoint`(최대 2곳). 장소 검색은 `requestNavigationScreen(SearchPlace)`. ETA 조회 API가 없어 직선거리 추정으로 대체 |
 | `PleosLocationProvider` | FusedLocation 1.1.3 | 위치 구독, 실패 시 "위치 미수신" 처리 |
 | `PleosDrivingStateProvider` | (Android) | 공개 주행 상태 API가 없어 `CarUxRestrictions` DO 요구를 주행 중으로 본다 |
 | 전화·볼륨·음성 | — | 공개 API/연동 방식 미확인 → 미지원 응답, UI는 안내형으로 대체 |
@@ -56,6 +56,20 @@ debug APK는 아이콘 라이브러리 때문에 60MB 이상이다. 콜드 스�
 - `requestRoute`에 POI ID 없이(빈 문자열) 좌표만으로 경로가 잡히는지
 - 경로 요청 직후 `onNavigationStatus`가 `FREE_DRIVE`를 먼저 보내 활성 경로가 지워지지 않는지
 - `Vehicle.initialize()` 직후 바로 호출해도 되는지 (서비스 바인딩 지연)
+- `requestNavigationScreen(SearchPlace("애견동반 카페"))`가 내비 검색 화면을 앞으로 띄우는지, 검색 결과가 쓸 만한지 (키워드 조정 필요할 수 있음)
+
+## 반려동물 동반 장소 데이터
+
+`app/src/main/assets/data/pet_places.json`은 공공데이터 "반려동물 동반 가능 문화시설" CSV를 변환한 것이다. 원본이 바뀌면 다시 만든다.
+
+```bash
+python3 scripts/build_pet_places.py data/facilities_with_pet.csv app/src/main/assets/data/pet_places.json
+./gradlew testFakeDebugUnitTest --tests '*PetPlaceAssetTest*'   # 종류별 개수·좌표·운영시간 해석률(85% 이상) 검증
+```
+
+- 카페·식당 / 여행지 / 문화시설 중 동반 가능(Y)만 남긴다 (약 1,900곳, 700KB). 동물병원·약국·펜션은 제외.
+- 운영시간·휴무일은 원문 그대로 두고 앱의 `OpeningHoursParser`가 해석한다 (현재 약 93% 해석).
+- 출처 표기와 이용 조건(공공누리 유형 등)은 원본 제공처 기준으로 확인 필요. 화면에는 출처 문구를 표시한다.
 
 ## 남은 일 (13장 확인 필요)
 

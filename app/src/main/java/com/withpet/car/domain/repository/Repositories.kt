@@ -5,6 +5,7 @@ import com.withpet.car.domain.model.CalmPlaylist
 import com.withpet.car.domain.model.CalmSituation
 import com.withpet.car.domain.model.Hospital
 import com.withpet.car.domain.model.PetModeSettings
+import com.withpet.car.domain.model.PetPlace
 import com.withpet.car.domain.model.PetProfile
 import com.withpet.car.domain.model.RestAlertSettings
 import com.withpet.car.domain.model.WalkSpot
@@ -17,6 +18,10 @@ interface HospitalRepository {
 
 interface WalkSpotRepository {
     suspend fun getAll(): List<WalkSpot>
+}
+
+interface PetPlaceRepository {
+    suspend fun getAll(): List<PetPlace>
 }
 
 interface PlaylistRepository {

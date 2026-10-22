@@ -9,4 +9,6 @@ interface NavigationController {
     suspend fun addWaypoint(point: GeoPoint, name: String): Result<Unit>
     suspend fun estimateEtaMinutes(destination: GeoPoint): Result<Int>
     fun activeRoute(): Flow<RouteInfo?>   // 경로 없으면 null
+    /** 내장 내비의 장소 검색 화면을 [keyword]로 연다 */
+    suspend fun searchPlace(keyword: String): Result<Unit>
 }

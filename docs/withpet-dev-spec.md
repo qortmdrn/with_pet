@@ -55,6 +55,7 @@
 | F5 | 펫 모드 | 원터치로 공조 온도·풍량, 뒷창문 소폭 개방, 볼륨 하향, 안정 사운드 재생 |
 | F6 | 안전 탑승 체크 | 펫 모드 시작 시 이동장·안전벨트 체크 안내 |
 | F7 | 반려동물 프로필 | 이름, 종, 나이, 체중, 사진 (로컬 저장) |
+| F8 | 반려동물 동반 장소 | 공공데이터 기반 동반 가능 카페·식당 / 여행지 / 문화시설을 영업 상태·거리순 표시, 터치 1회로 길 안내/경유지 추가. 목록 밖은 내장 내비 검색으로 연결 |
 
 ### 제외 (MVP 이후)
 
@@ -144,7 +145,8 @@ withpet/
 │       │   │   ├── driving/             # DrivingStateProvider
 │       │   │   └── voice/               # VoiceCommandSource
 │       │   └── media/                   # CalmPlaybackService (MediaSessionService)
-│       ├── main/assets/mock/            # hospitals.json, walk_spots.json, playlists.json
+│       ├── main/assets/mock/            # hospitals.json, walk_spots.json, playlists.json (목업)
+│       ├── main/assets/data/            # pet_places.json (공공데이터 변환본, scripts/build_pet_places.py)
 │       ├── main/res/raw/                # 안정 사운드 샘플 음원 (저작권 확보된 것만)
 │       ├── fake/                        # Fake 어댑터 바인딩
 │       └── pleos/                       # Pleos SDK 어댑터 바인딩
@@ -175,6 +177,7 @@ interface NavigationController {
     suspend fun addWaypoint(point: GeoPoint, name: String): Result<Unit>
     suspend fun estimateEtaMinutes(destination: GeoPoint): Result<Int>
     fun activeRoute(): Flow<RouteInfo?>   // 경로 없으면 null
+    suspend fun searchPlace(keyword: String): Result<Unit>   // 내장 내비 장소 검색 화면 열기
 }
 
 // platform/location
@@ -388,6 +391,25 @@ OFF 시: 창문 원위치(진입 전 값 저장해 두었다가 복원), 안정 
 - 프로필: 여러 마리 등록 가능, 대표 1마리 지정.
 - 설정: 펫 모드 기본값(온도·풍량·창문·볼륨·자동 재생), 휴식 알림(ON/OFF, 간격 60/90/120분).
 - 디버그 메뉴 (`fake` flavor에서만): 위치, 주행 상태, 연속 주행 시간, 휴대폰 연결 여부 조작.
+
+### 7-8. 반려동물 동반 장소 (`ui/place`) — F8
+
+**데이터:** 공공데이터 "반려동물 동반 가능 문화시설"(`data/facilities_with_pet.csv`) 중 카페·식당 / 여행지 / 문화시설(박물관·미술관·문예회관)이면서 `반려동물 동반 가능정보 = Y`인 곳. `scripts/build_pet_places.py`로 `assets/data/pet_places.json`을 만들어 앱에 포함한다. 동물병원·약국·펜션은 제외.
+
+**진입:** 홈의 "동반 장소" 버튼 (정차 시에만 표시 — 주행 중 홈 주요 버튼 3개 제한)
+
+| 요소 | 동작 |
+| --- | --- |
+| 종류 칩 | 카페·식당 / 여행지 / 문화시설 (주행 중 숨김, 마지막 선택 유지) |
+| 목록 | 반경 20km(없으면 50km). 영업 중 → 영업시간 확인 필요 → 영업 종료 순, 같은 그룹은 거리순. 최대 20곳 |
+| 항목 | 이름, 거리, 영업 상태. 정차 시 대형견 가능, 운영시간·휴무 원문, 크기 제한·제한사항·추가 요금, 주소, 주차 |
+| 항목 액션 | "경유지로 추가" (경로 있을 때) / "길 안내" (경로 없을 때). 터치 1회 |
+| 내비에서 더 찾기 | 내장 내비 장소 검색 화면을 종류별 키워드로 연다 (`NavigationController.searchPlace`). 정차 시에만 |
+
+**영업 상태:** `OpeningHoursParser`가 운영시간·휴무일 원문을 요일별 시간으로 바꾸고 `OpenStatusCalculator`로 계산한다. 계절별 시간·"일몰"·"변동" 등은 미확인. 공휴일·명절·"N째주" 휴무는 반영하지 않는다(원문을 함께 표시).
+
+수용 기준: 주행 중에는 가장 가까운 3곳만 표시. 위치가 300m 이상 바뀔 때만 목록을 다시 계산한다.
+유의: 원본 최종작성일이 2022~2025년이라 폐업·변경이 있을 수 있다. 화면에 출처와 "방문 전 확인" 안내를 표시한다.
 
 ---
 

@@ -164,5 +164,7 @@ object TestTags {
     const val MORE_AFTER_PARKING = "more_after_parking"
     const val PARKED_ONLY = "parked_only"
     const val WALK_ITEM = "walk_item"
+    const val PLACE_ITEM = "place_item"
+    const val PLACE_NAVI_SEARCH = "place_navi_search"
     const val PET_MODE_TOGGLE = "pet_mode_toggle"
 }

@@ -4,6 +4,7 @@ import ai.pleos.playground.navi.constants.NaviErrorCode
 import ai.pleos.playground.navi.constants.NavigationStatus
 import ai.pleos.playground.navi.constants.WaypointIndex
 import ai.pleos.playground.navi.data.DestinationInfo
+import ai.pleos.playground.navi.data.NavigationScreenRequest
 import ai.pleos.playground.navi.data.RequestWaypointInfo
 import ai.pleos.playground.navi.data.WaypointInfo
 import ai.pleos.playground.navi.helper.NaviHelper
@@ -97,6 +98,10 @@ class PleosNavigationController @Inject constructor(
     /** 임의 목적지까지의 ETA 조회 API가 없다. 호출 측이 직선거리로 추정한다. */
     override suspend fun estimateEtaMinutes(destination: GeoPoint): Result<Int> =
         Result.failure(UnsupportedFeature("ETA 조회 미지원"))
+
+    override suspend fun searchPlace(keyword: String): Result<Unit> = runCatching {
+        helper().requestNavigationScreen(NavigationScreenRequest.SearchPlace(keyword))
+    }
 
     override fun activeRoute(): Flow<RouteInfo?> = flow {
         runCatching { helper() }.onFailure { Log.w(TAG, "NaviHelper 초기화 실패", it) }

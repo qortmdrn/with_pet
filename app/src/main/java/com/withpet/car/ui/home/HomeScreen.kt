@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Forest
 import androidx.compose.material.icons.filled.LocalHospital
 import androidx.compose.material.icons.filled.MusicNote
@@ -42,6 +43,7 @@ import com.withpet.car.ui.theme.WithPetColors
 @Composable
 fun HomeScreen(
     onOpenWalk: () -> Unit,
+    onOpenPlace: () -> Unit,
     onOpenCalm: () -> Unit,
     onOpenEmergency: () -> Unit,
     onOpenProfile: () -> Unit,
@@ -75,6 +77,7 @@ fun HomeScreen(
             }
         }
         if (!state.restricted) {
+            BigActionButton("동반 장소", Icons.Filled.Pets, onOpenPlace, Modifier.fillMaxWidth())
             BigActionButton("설정", Icons.Filled.Settings, onOpenSettings, Modifier.fillMaxWidth())
         }
     }

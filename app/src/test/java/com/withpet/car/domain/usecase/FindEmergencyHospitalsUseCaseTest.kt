@@ -40,6 +40,7 @@ class FindEmergencyHospitalsUseCaseTest {
         override suspend fun estimateEtaMinutes(destination: GeoPoint): Result<Int> =
             etaByLocation[destination]?.let { Result.success(it) } ?: Result.failure(IllegalStateException())
         override fun activeRoute(): Flow<RouteInfo?> = flowOf(null)
+        override suspend fun searchPlace(keyword: String) = Result.success(Unit)
     }
 
     private fun useCase(list: List<Hospital>, eta: Map<GeoPoint, Int> = emptyMap()) =
