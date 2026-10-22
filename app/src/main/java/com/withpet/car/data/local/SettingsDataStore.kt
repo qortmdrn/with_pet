@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import com.withpet.car.domain.model.CalmSituation
 import com.withpet.car.domain.model.PetModeSettings
 import com.withpet.car.domain.model.RestAlertSettings
 import com.withpet.car.domain.repository.SettingsRepository
@@ -54,6 +56,14 @@ class DataStoreSettingsRepository(
         }
     }
 
+    override fun lastCalmSituation(): Flow<CalmSituation?> = dataStore.data.map { p ->
+        p[LAST_CALM_SITUATION]?.let { name -> CalmSituation.entries.find { it.name == name } }
+    }.distinctUntilChanged()
+
+    override suspend fun setLastCalmSituation(situation: CalmSituation) {
+        dataStore.edit { p -> p[LAST_CALM_SITUATION] = situation.name }
+    }
+
     fun representativePetId(): Flow<Long?> = dataStore.data.map { it[REPRESENTATIVE_PET] }.distinctUntilChanged()
 
     suspend fun setRepresentativePetId(id: Long?) {
@@ -69,5 +79,6 @@ class DataStoreSettingsRepository(
         val REST_ENABLED = booleanPreferencesKey("rest_alert_enabled")
         val REST_INTERVAL = intPreferencesKey("rest_alert_interval_minutes")
         val REPRESENTATIVE_PET = longPreferencesKey("representative_pet_id")
+        val LAST_CALM_SITUATION = stringPreferencesKey("last_calm_situation")
     }
 }

@@ -41,6 +41,10 @@ interface SettingsRepository {
     fun restAlertSettings(): Flow<RestAlertSettings>
     suspend fun updatePetModeSettings(settings: PetModeSettings)
     suspend fun updateRestAlertSettings(settings: RestAlertSettings)
+
+    /** 안정 사운드 화면에서 마지막으로 고른 상황. 다음 실행 때 기본 선택으로 쓴다 (명세 7-5). */
+    fun lastCalmSituation(): Flow<CalmSituation?>
+    suspend fun setLastCalmSituation(situation: CalmSituation)
 }
 
 /** 안정 사운드 재생기. 구현은 MediaSessionService와 연결된다. */

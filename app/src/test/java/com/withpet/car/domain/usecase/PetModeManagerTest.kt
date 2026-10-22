@@ -58,6 +58,8 @@ class PetModeManagerTest {
         override fun restAlertSettings() = flowOf(RestAlertSettings())
         override suspend fun updatePetModeSettings(settings: PetModeSettings) = Unit
         override suspend fun updateRestAlertSettings(settings: RestAlertSettings) = Unit
+        override fun lastCalmSituation() = flowOf<CalmSituation?>(null)
+        override suspend fun setLastCalmSituation(situation: CalmSituation) = Unit
     }
 
     private val vehicle = Vehicle()
