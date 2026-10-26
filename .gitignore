@@ -9,3 +9,10 @@ captures/
 
 # 원본 공공데이터 (30MB). 앱은 scripts/build_pet_places.py 변환본(assets/data)만 쓴다
 data/*.csv
+
+# 프로젝트 폴더를 GRADLE_USER_HOME으로 잡고 빌드할 때 생기는 Gradle 캐시
+/caches/
+/wrapper/dists/
+/daemon/
+/native/
+/android/
