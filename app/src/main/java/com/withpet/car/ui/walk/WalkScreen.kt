@@ -13,10 +13,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddLocationAlt
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Directions
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -33,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.withpet.car.domain.model.WalkSpotType
+import com.withpet.car.domain.usecase.GetNearbyWalkSpotsUseCase
 import com.withpet.car.domain.usecase.NearbyWalkSpot
 import com.withpet.car.domain.usecase.WalkSpotFilter
 import com.withpet.car.ui.components.BigActionButton
@@ -68,7 +71,7 @@ fun WalkScreen(viewModel: WalkViewModel = hiltViewModel()) {
         val spots = state.spots
         when {
             spots == null -> Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            spots.isEmpty() -> Text("근처에 산책할 곳을 찾지 못했어요", style = MaterialTheme.typography.titleMedium)
+            spots.isEmpty() -> Text("근처 ${GetNearbyWalkSpotsUseCase.NEARBY_RADIUS_KM.toInt()}km 안에 지금 산책할 수 있는 곳을 찾지 못했어요", style = MaterialTheme.typography.titleMedium)
             else -> DrivingAwareList(spots, state.restricted) { item ->
                 WalkSpotItem(item, hasRoute = state.route != null, restricted = state.restricted, onGo = { viewModel.go(item) })
             }
@@ -89,13 +92,7 @@ private fun WalkSpotItem(item: NearbyWalkSpot, hasRoute: Boolean, restricted: Bo
                     // 주행 중에는 텍스트 한 줄 이하: 부가 정보는 정차 시에만
                     if (!restricted && spot.largeDogAllowed) StatusBadge("대형견 가능", MaterialTheme.colorScheme.primary)
                 }
-                if (!restricted) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        if (spot.leashRequired) Amenity(Icons.Filled.Link, "목줄 필수")
-                        if (spot.hasWasteBin) Amenity(Icons.Filled.Delete, "배변봉투함")
-                        if (spot.hasWater) Amenity(Icons.Filled.WaterDrop, "음수대")
-                    }
-                }
+                if (!restricted) Details(item)
             }
             BigActionButton(
                 if (hasRoute) "경유지로 추가" else "길 안내",
@@ -110,10 +107,25 @@ private fun WalkSpotItem(item: NearbyWalkSpot, hasRoute: Boolean, restricted: Bo
 }
 
 @Composable
-private fun Amenity(icon: ImageVector, label: String) {
+private fun Details(item: NearbyWalkSpot) {
+    val spot = item.spot
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        if (spot.leashRequired) Info(Icons.Filled.Link, "목줄 필수")
+        Info(Icons.Filled.Payments, spot.fee?.let { "입장료 $it" } ?: "무료")
+    }
+    // 상시 개방이 아니면 운영시간을 보여 준다
+    val hours = listOfNotNull(spot.hoursText, spot.closedDaysText?.takeIf { it != "연중무휴" }?.let { "휴무 $it" }).joinToString(" · ")
+    if (hours.isNotEmpty() && spot.hoursText != "매일 00:00~24:00") Info(Icons.Filled.Schedule, hours)
+    val pet = listOfNotNull(spot.sizeLimit?.takeIf { !spot.largeDogAllowed }, spot.restriction).joinToString(" · ")
+    if (pet.isNotEmpty()) Info(Icons.Filled.Pets, pet)
+    Info(Icons.Filled.Home, spot.address)
+}
+
+@Composable
+private fun Info(icon: ImageVector, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Icon(icon, contentDescription = null)
-        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -131,6 +143,6 @@ val WalkSpotType.label: String
         WalkSpotType.DOG_PARK -> "반려견 놀이터"
         WalkSpotType.PARK -> "공원"
         WalkSpotType.TRAIL -> "산책로"
-        WalkSpotType.OPEN_FIELD -> "공터"
+        WalkSpotType.WATERSIDE -> "물가"
         WalkSpotType.REST_AREA -> "쉼터"
     }

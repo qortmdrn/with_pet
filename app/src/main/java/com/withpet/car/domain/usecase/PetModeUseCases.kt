@@ -12,7 +12,7 @@ enum class PetModeStep(val label: String) {
     TEMPERATURE("온도 조절"),
     FAN("풍량 조절"),
     WINDOW("창문 자동 조절"),
-    VOLUME("볼륨 조절"),
+    VOLUME("안정 사운드 볼륨"),
     CALM_SOUND("안정 사운드 재생"),
 }
 

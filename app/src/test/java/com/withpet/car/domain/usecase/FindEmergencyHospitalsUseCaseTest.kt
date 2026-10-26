@@ -73,16 +73,25 @@ class FindEmergencyHospitalsUseCaseTest {
     }
 
     @Test
-    fun `내비 ETA를 우선 쓰고, 실패하면 직선거리로 추정한다`() = runTest {
+    fun `내비 ETA가 모두 오면 내비 기준으로 정렬한다`() = runTest {
         val a = hospital("a", CITY_HALL.north(2.0), is24Hours = true)
         val b = hospital("b", CITY_HALL.north(8.0), is24Hours = true)
-        // 내비 기준으로는 b가 더 빠르다
-        val result = useCase(listOf(a, b), eta = mapOf(b.location to 2))(CITY_HALL)
+        // 직선거리로는 a가 가깝지만 내비 기준으로는 b가 더 빠르다
+        val result = useCase(listOf(a, b), eta = mapOf(a.location to 15, b.location to 2))(CITY_HALL)
 
         assertEquals(listOf("b", "a"), result.candidates.map { it.hospital.id })
-        assertEquals(2, result.candidates[0].etaMinutes)
-        // 내비 실패 → 직선거리 ÷ 40km/h
-        assertEquals(EtaEstimator.estimateMinutes(CITY_HALL, a.location), result.candidates[1].etaMinutes)
+        assertEquals(listOf(2, 15), result.candidates.map { it.etaMinutes })
+    }
+
+    @Test
+    fun `내비 ETA가 하나라도 없으면 섞지 않고 모두 직선거리로 추정한다`() = runTest {
+        val a = hospital("a", CITY_HALL.north(2.0), is24Hours = true)
+        val b = hospital("b", CITY_HALL.north(8.0), is24Hours = true)
+        val result = useCase(listOf(a, b), eta = mapOf(b.location to 2))(CITY_HALL)
+
+        assertEquals(listOf("a", "b"), result.candidates.map { it.hospital.id })
+        // 직선거리 ÷ 40km/h
+        assertEquals(EtaEstimator.estimateMinutes(CITY_HALL, b.location), result.candidates[1].etaMinutes)
     }
 
     @Test
@@ -114,7 +123,7 @@ class FindEmergencyHospitalsUseCaseTest {
     }
 
     @Test
-    fun `병원이 많아도 상태별로 가까운 곳만 ETA를 구한다`() = runTest {
+    fun `병원이 많아도 추정 순위 상위 몇 곳만 내비 ETA를 구한다`() = runTest {
         var etaCalls = 0
         val counting = object : NavigationController by Nav(emptyMap()) {
             override suspend fun estimateEtaMinutes(destination: GeoPoint): Result<Int> {
@@ -125,7 +134,7 @@ class FindEmergencyHospitalsUseCaseTest {
         val many = (1..200).map { hospital("h$it", CITY_HALL.north(it * 0.05), is24Hours = true) }
         val result = FindEmergencyHospitalsUseCase(Repo(many), counting, clock)(CITY_HALL)
 
-        assertEquals(FindEmergencyHospitalsUseCase.ETA_POOL_PER_STATUS, etaCalls)
+        assertEquals(FindEmergencyHospitalsUseCase.ETA_REFINE_COUNT, etaCalls)
         assertEquals(listOf("h1", "h2", "h3"), result.candidates.map { it.hospital.id })
     }
 

@@ -7,11 +7,20 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /** 안정 사운드 재생. 앱 화면을 벗어나도 계속 재생되고 차량 미디어 컨트롤과 연동된다. */
+@AndroidEntryPoint
 class CalmPlaybackService : MediaSessionService() {
 
+    @Inject lateinit var volume: AppPlaybackVolume
+
     private var session: MediaSession? = null
+    private val scope = MainScope()
 
     override fun onCreate() {
         super.onCreate()
@@ -26,6 +35,8 @@ class CalmPlaybackService : MediaSessionService() {
             .build()
             .apply { repeatMode = Player.REPEAT_MODE_ALL }
         session = MediaSession.Builder(this, player).build()
+        // 펫 모드가 정한 앱 재생 볼륨 (pleos). fake 빌드는 바뀌지 않아 100%
+        scope.launch { volume.percent.collect { player.volume = it / 100f } }
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
@@ -36,6 +47,7 @@ class CalmPlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        scope.cancel()
         session?.run {
             player.release()
             release()

@@ -52,7 +52,7 @@
 | F2 | 산책 스팟 | 현재 위치 주변 반려견 놀이터·공원·산책로를 거리순 표시, 경유지/목적지 설정 |
 | F3 | 휴식 알림 | 연속 주행 시간 기준으로 경로상 쉼터 제안, 승인 시 경유지 추가 |
 | F4 | 안정 사운드 | 상황별 플레이리스트 재생 (출발·장거리·병원 가는 길·귀가) |
-| F5 | 펫 모드 | 원터치로 공조 온도·풍량, 뒷창문 소폭 개방, 볼륨 하향, 안정 사운드 재생 |
+| F5 | 펫 모드 | 원터치로 공조 온도·풍량, 뒷창문 소폭 개방, 안정 사운드 볼륨 조절·재생 |
 | F6 | 안전 탑승 체크 | 펫 모드 시작 시 이동장·안전벨트 체크 안내 |
 | F7 | 반려동물 프로필 | 이름, 종, 나이, 체중, 사진 (로컬 저장) |
 | F8 | 반려동물 동반 장소 | 공공데이터 기반 동반 가능 카페·식당 / 여행지 / 문화시설을 영업 상태·거리순 표시, 터치 1회로 길 안내/경유지 추가. 목록 밖은 내장 내비 검색으로 연결 |
@@ -61,7 +61,7 @@
 
 광고, 도착 예고 전송, 펫 진료 카드 전송, 주행 코칭, 멀미 일지, 모바일 앱 동기화, 음성 펫 비서(LLM), 차내 방치 경고, 커머스·구독, 영상 재생, 병원 파트너 콘솔, 실서버 연동.
 
-> 병원·동반 장소 데이터는 공공데이터 CSV를 변환한 **로컬 JSON**(`assets/data`)을 쓴다. 산책 스팟·플레이리스트는 목업 JSON. 서버 연동은 데이터 소스 인터페이스 뒤에서 나중에 교체한다.
+> 병원·동반 장소·산책 스팟 데이터는 공공데이터 CSV를 변환한 **로컬 JSON**(`assets/data`)을 쓴다. 플레이리스트만 목업 JSON. 서버 연동은 데이터 소스 인터페이스 뒤에서 나중에 교체한다.
 
 ---
 
@@ -77,7 +77,7 @@
 | 로컬 저장 | DataStore(설정), Room(프로필) | |
 | 미디어 | AndroidX Media3 (ExoPlayer + MediaSession) | 차량 미디어 시스템과 연동되도록 MediaSession 사용 |
 | 주행 제한 | Android Automotive `CarUxRestrictionsManager` | 주행 중 UI 제한 상태 구독 |
-| 차량 기능 | Pleos Connect SDK (Vehicle, NaviHelper, Fused Location, Gleo AI) | 어댑터로 감쌈 |
+| 차량 기능 | Pleos Connect SDK (Vehicle, NaviHelper, FusedLocation, TextToSpeech, SpeechToText) + Gleo Interface | 어댑터로 감쌈. 정리본은 `docs/pleos-sdk/` |
 | 테스트 | JUnit5, MockK, Turbine, Compose UI Test | |
 | 빌드 | Gradle (Kotlin DSL), 버전 카탈로그 | |
 | 개발 환경 | Android Studio + Pleos Connect Emulator (AVD) | 사용자가 직접 설치 |
@@ -86,7 +86,7 @@
 
 - Vehicle SDK: 차량 상태 조회·제어. HVAC, Window, Seat, Door, Brake, DrivingMode, Safety 등 API 그룹 제공
 - NaviHelper SDK: 내장 내비게이션 제어 (목적지 설정, 경유지 추가·삭제, 경로 정보 조회)
-- Gleo AI SDK: 음성 인식(STT), 음성 합성(TTS), LLM
+- TextToSpeech·SpeechToText SDK (ON_DEVICE 모드). 음성 명령은 Gleo Interface(App Schema + Intent, Pleos 승인 필요). LLM SDK는 종료됨
 - Fused Location SDK: 차량 위치
 - Sync SDK: 모바일과 데이터 동기화 (MVP 제외)
 
@@ -145,8 +145,8 @@ withpet/
 │       │   │   ├── driving/             # DrivingStateProvider
 │       │   │   └── voice/               # VoiceCommandSource
 │       │   └── media/                   # CalmPlaybackService (MediaSessionService)
-│       ├── main/assets/mock/            # walk_spots.json, playlists.json (목업)
-│       ├── main/assets/data/            # hospitals.json, pet_places.json (공공데이터 변환본, scripts/build_public_data.py)
+│       ├── main/assets/mock/            # playlists.json (목업)
+│       ├── main/assets/data/            # hospitals.json, pet_places.json, walk_spots.json (공공데이터 변환본, scripts/build_public_data.py)
 │       ├── main/res/raw/                # 안정 사운드 샘플 음원 (저작권 확보된 것만)
 │       ├── fake/                        # Fake 어댑터 바인딩
 │       └── pleos/                       # Pleos SDK 어댑터 바인딩
@@ -200,6 +200,7 @@ interface DrivingStateProvider {
 // platform/voice  (MVP: 정해진 명령어만. LLM 사용 안 함)
 interface VoiceCommandSource {
     fun commands(): Flow<VoiceCommand>
+    suspend fun listenForAnswer() {}   // 앱이 질문을 읽은 뒤 짧은 답을 한 번 듣는다 (Pleos STT는 앱이 시작해야 들음)
 }
 
 enum class DrivingState { PARKED, DRIVING }
@@ -312,14 +313,14 @@ enum class CalmSituation { DEPARTURE, LONG_DRIVE, TO_HOSPITAL, RETURN_HOME }
 | --- | --- |
 | 반려동물 카드 | 대표 프로필 사진·이름. 없으면 "반려동물 등록" (정차 시만) |
 | 펫 모드 토글 | ON 시 F5 실행 + F6 체크 안내 다이얼로그 |
-| 바로가기 3개 | 산책 스팟 / 안정 사운드 / 응급 |
+| 바로가기 | 산책 스팟 / 동반 장소 / 안정 사운드 (주행 중에도 표시). 정차 시 응급 / 설정 추가. 동반 장소를 주행 중에도 열기 위해 펫 모드 토글 포함 주요 버튼 4개로, 7장 공통 규칙(3개 이하)의 예외로 정했다 |
 | 진행 중 상태 | 펫 모드 ON이면 "실내 22℃ · 안정 사운드 재생 중" 한 줄 |
 
 ### 7-2. 응급 모드 (`ui/emergency`) — F1
 
 **진입:** 응급 버튼 터치 또는 `VoiceCommand.Emergency`
 
-**데이터:** 공공데이터 "반려동물 동반 가능 문화시설"의 동물병원 (중복 제거 후 약 4,500곳, `assets/data/hospitals.json`). 앱 시작 때 미리 읽는다(`DataPreloader`). 진료 시간은 `OpeningHoursParser`의 strict 모드로 해석한다: "N째주"·"마지막주" 휴진이 있으면 UNKNOWN. 공휴일 휴진은 반영하지 못한다. 24시는 7일 모두 00:00~24:00인 병원. 전화번호가 없는 병원(약 4%)은 길 안내만 하고 "등록된 전화번호가 없어요"를 표시한다.
+**데이터:** 공공데이터 "반려동물 동반 가능 문화시설"의 동물병원 (중복 제거 후 약 4,500곳, `assets/data/hospitals.json`). 앱 시작 때 미리 읽는다(`DataPreloader`). 진료 시간은 `OpeningHoursParser`의 strict 모드로 해석한다: "N째주"·"마지막주" 휴진이 있으면 UNKNOWN. 공휴일 휴진은 `KoreanHolidays`(대체공휴일 포함, 현재 2026~2027년)로 반영한다: "법정공휴일"이면 모든 공휴일, "설"·"추석"·"1월1일"이면 해당 공휴일에 CLOSED. "공휴일 다음날" 휴진은 UNKNOWN. 24시는 7일 모두 00:00~24:00인 병원. 전화번호가 없는 병원(약 4%)은 길 안내만 하고 "등록된 전화번호가 없어요"를 표시한다.
 
 **동작**
 
@@ -328,7 +329,7 @@ enum class CalmSituation { DEPARTURE, LONG_DRIVE, TO_HOSPITAL, RETURN_HOME }
 3. ETA를 계산한다 (`NavigationController.estimateEtaMinutes`, 실패 시 직선거리 기반 추정). 도심은 반경 안 병원이 수백 곳이므로 상태별로 직선거리가 가까운 10곳만 계산한다.
 4. 정렬: OPEN 먼저 → UNKNOWN → (CLOSED 제외). 같은 그룹 안에서는 ETA 오름차순. 최대 3곳.
 5. 각 항목: 병원명, ETA(분), 24시 배지, 진료 상태 ("진료 중" / "진료 시간 미확인 · 전화 확인 필요").
-6. 항목 선택 시 **동시에**: `PhoneDialer.call()` + `NavigationController.startGuidance()`.
+6. 항목 선택 시 **동시에**: `PhoneDialer.call()` + `NavigationController.startGuidance()`. Pleos에서는 `call()`이 다이얼러에 번호만 채우므로(`ACTION_DIAL`) 결과 화면에 번호와 "다이얼러에서 통화 버튼을 눌러 주세요"를 표시한다.
 7. 휴대폰 미연결 시: 전화 대신 병원 번호를 크게 표시하고 "휴대폰을 연결하면 바로 전화할 수 있어요" 안내. 길 안내는 그대로 시작.
 8. 결과가 0곳이면: 반경을 50km로 넓혀 재검색. 그래도 없으면 "근처에 진료 중인 병원을 찾지 못했어요"와 가장 가까운 병원(진료 상태 무관) 1곳 표시.
 9. **원터치 안내:** 정렬 1순위가 OPEN이면 목록을 거치지 않고 그 병원으로 6번을 바로 실행한다. 결과 화면에 "가장 빨리 도착하는 진료 중 병원"을 표시하고, "다른 병원 보기"로 목록에 돌아갈 수 있다. 1순위가 UNKNOWN이거나 대체 병원만 있으면 자동으로 고르지 않고 목록을 보여 준다.
@@ -348,8 +349,9 @@ enum class CalmSituation { DEPARTURE, LONG_DRIVE, TO_HOSPITAL, RETURN_HOME }
 
 | 요소 | 동작 |
 | --- | --- |
+| 데이터 | 공공데이터 여행지 중 산책할 만한 곳 약 560곳 (`assets/data/walk_spots.json`): 반려견 놀이터·공원·산책로·물가(해변·호수)·쉼터. 사찰·마을 같은 관광지는 제외(동반 장소 > 여행지에서 보임) |
 | 필터 칩 | 전체 / 반려견 놀이터 / 공원 / 산책로 / 대형견 가능 (주행 중 숨김) |
-| 목록 | 거리순. 아이콘으로 목줄 필수·배변봉투함·음수대 표시 |
+| 목록 | 반경 20km, 지금 닫힌 곳 제외, 거리순 최대 20곳. 정차 시 목줄 필수·입장료·운영시간(상시 개방이 아니면)·크기 제한·제한사항·주소 표시. 음수대·배변봉투함 정보는 원본에 없어 표시하지 않는다 |
 | 항목 액션 | "경유지로 추가" (경로 있을 때) / "길 안내" (경로 없을 때) |
 
 수용 기준: 주행 중에는 가장 가까운 3곳만, 필터 없이 표시.
@@ -357,7 +359,7 @@ enum class CalmSituation { DEPARTURE, LONG_DRIVE, TO_HOSPITAL, RETURN_HOME }
 ### 7-4. 휴식 알림 — F3 (화면이 아닌 백그라운드 로직 + 오버레이 카드)
 
 1. `continuousDrivingMinutes() >= intervalMinutes`이고 펫 모드가 ON이면 트리거.
-2. 활성 경로가 있으면 경로 진행 방향 앞쪽 15km 이내 `WalkSpot` 중 가장 가까운 1곳, 없으면 현재 위치 반경 5km 내 1곳을 고른다.
+2. 활성 경로가 있으면 경로 진행 방향 앞쪽 15km 이내 `WalkSpot` 중 가장 가까운 1곳, 없으면 현재 위치 반경 5km 내 1곳을 고른다. 지금 닫혀 있는 곳은 제외한다.
 3. 오버레이 카드: "OO분 주행했어요. 10분 뒤 [장소명]에서 쉬어 갈까요?" + [추가] [나중에]
 4. TTS 사용 가능하면 같은 문장을 읽고 `Confirm`/`Reject` 음성 응답을 받는다.
 5. [추가] → `addWaypoint()`. [나중에] → 30분 뒤 재알림. 한 주행에서 거절 2회 시 그 주행에는 더 이상 알리지 않는다.
@@ -379,7 +381,7 @@ ON 시 순서대로 실행하고, 각 단계 실패는 무시하되 결과를 �
 1. `setCabinTemperature(targetTempC)`
 2. `setFanLevel(fanLevel)`
 3. `setRearWindowVentilation(rearWindowOpenPercent)`
-4. 미디어 볼륨을 `mediaVolumePercent`로 (AudioManager 또는 차량 API, 확인 필요)
+4. 안정 사운드(앱 재생) 볼륨을 `mediaVolumePercent`로. 차량 전체 미디어 볼륨은 서드파티 앱이 바꿀 수 없어(SDK에 API 없음) 앱 재생 볼륨만 조절한다 (`AppPlaybackVolume`)
 5. `autoPlayCalmSound`면 `DEPARTURE` 플레이리스트 재생
 6. 안전 탑승 체크 다이얼로그: "반려동물이 이동장 또는 전용 안전벨트에 있나요? 운전석에 안고 운전하는 것은 도로교통법 위반이에요." + [확인]
 
@@ -398,7 +400,7 @@ OFF 시: 창문 원위치(진입 전 값 저장해 두었다가 복원), 안정 
 
 **데이터:** 공공데이터 "반려동물 동반 가능 문화시설"(`data/facilities_with_pet.csv`) 중 카페·식당 / 여행지 / 문화시설(박물관·미술관·문예회관)이면서 `반려동물 동반 가능정보 = Y`인 곳. `scripts/build_public_data.py`로 `assets/data/pet_places.json`을 만들어 앱에 포함한다. 동물병원·약국·펜션은 제외.
 
-**진입:** 홈의 "동반 장소" 버튼 (정차 시에만 표시 — 주행 중 홈 주요 버튼 3개 제한)
+**진입:** 홈의 "동반 장소" 버튼 (주행 중에도 표시, 7-1). 주행 중에는 종류 칩을 숨기고 마지막으로 고른 종류를 보여 준다
 
 | 요소 | 동작 |
 | --- | --- |
@@ -408,7 +410,7 @@ OFF 시: 창문 원위치(진입 전 값 저장해 두었다가 복원), 안정 
 | 항목 액션 | "경유지로 추가" (경로 있을 때) / "길 안내" (경로 없을 때). 터치 1회 |
 | 내비에서 더 찾기 | 내장 내비 장소 검색 화면을 종류별 키워드로 연다 (`NavigationController.searchPlace`). 정차 시에만 |
 
-**영업 상태:** `OpeningHoursParser`가 운영시간·휴무일 원문을 요일별 시간으로 바꾸고 `OpenStatusCalculator`로 계산한다. 계절별 시간·"일몰"·"변동" 등은 미확인. 공휴일·명절·"N째주" 휴무는 반영하지 않는다(원문을 함께 표시).
+**영업 상태:** `OpeningHoursParser`가 운영시간·휴무일 원문을 요일별 시간으로 바꾸고 `OpenStatusCalculator`로 계산한다. 계절별 시간·"일몰"·"변동" 등은 미확인. 공휴일·명절 휴무는 `KoreanHolidays`로 반영하고, "N째주" 휴무는 반영하지 않는다(원문을 함께 표시).
 
 수용 기준: 주행 중에는 가장 가까운 3곳만 표시. 위치가 300m 이상 바뀔 때만 목록을 다시 계산한다.
 유의: 원본 최종작성일이 2022~2025년이라 폐업·변경이 있을 수 있다. 화면에 출처와 "방문 전 확인" 안내를 표시한다.
@@ -435,7 +437,7 @@ OFF 시: 창문 원위치(진입 전 값 저장해 두었다가 복원), 안정 
 | --- | --- |
 | 안전 | 7장 공통 UI 규칙 준수, 응급 모드 광고 금지, 원격 진료 오해 문구 금지 |
 | 성능 | 앱 콜드 스타트 2초 이내, 응급 목록 2초 이내 (공공데이터는 앱 시작 때 미리 로드) |
-| 오프라인 | 병원·장소·목업 데이터 모두 로컬이므로 네트워크 없이 전 기능 동작 |
+| 오프라인 | 병원·장소·산책 스팟·목업 데이터 모두 로컬이므로 네트워크 없이 전 기능 동작 |
 | 개인정보 | 위치는 기기 안에서만 사용, 외부 전송 없음 (MVP). 위치 권한 요청 시 사용 목적 표시 |
 | 접근성 | 텍스트 최소 24sp (주행 중 화면), 색만으로 상태 구분 금지 (배지 텍스트 병기) |
 | 로그 | 개인정보·위치 좌표를 로그에 남기지 않음 |
@@ -446,7 +448,6 @@ OFF 시: 창문 원위치(진입 전 값 저장해 두었다가 복원), 안정 
 
 `app/src/main/assets/mock/`에 생성한다. 병원은 목업 대신 공공데이터(7-2)를 쓴다. **병원 번호가 실제 번호이므로** fake 빌드의 `FakePhoneDialer`는 발신하지 않고 기록·토스트만 한다.
 
-- `walk_spots.json`: 같은 반경에 15곳. 유형별로 고르게, 대형견 가능 5곳.
 - `playlists.json`: 상황별 2~3곡, 음원은 `res/raw` 파일명 참조.
 
 ---
@@ -480,15 +481,15 @@ OFF 시: 창문 원위치(진입 전 값 저장해 두었다가 복원), 안정 
 
 ## 13. 확인 필요 (사람이 결정하거나 자료를 줘야 하는 것)
 
-- [ ] 플레오스 플레이그라운드 개발자 등록, SDK·에뮬레이터 설치, SDK 문서 사본을 `docs/pleos-sdk/`에 저장
-- [ ] Vehicle SDK로 서드파티 앱이 공조·창문을 **제어**할 수 있는 권한 범위
-- [ ] 앱에서 블루투스 연결 휴대폰으로 바로 발신하는 방식 (시스템 다이얼러 인텐트 사용 여부)
-- [ ] 미디어 볼륨 제어 방식 (Android AudioManager vs 차량 API)
-- [ ] Gleo AI 음성 명령을 서드파티 앱이 받는 방식
+- [ ] 플레오스 플레이그라운드 개발자 등록, SDK·에뮬레이터 설치 (SDK 문서 정리본은 `docs/pleos-sdk/`에 저장함)
+- [ ] Vehicle SDK로 서드파티 앱이 공조·창문을 **제어**할 수 있는 권한 범위 → 앱 마켓 사전 승인 필요 (`docs/pleos-sdk/app-review.md`). 승인 요청 필요
+- [x] 앱에서 블루투스 연결 휴대폰으로 바로 발신하는 방식 → SDK에 API 없음. `ACTION_DIAL`로 다이얼러에 번호만 채우기로 결정 (자동 발신 안 함). 실차에서 다이얼러·블루투스 동작 확인 필요
+- [x] 미디어 볼륨 제어 방식 → SDK에 API 없음. 앱 재생 볼륨(안정 사운드)만 조절하기로 결정
+- [x] Gleo AI 음성 명령을 서드파티 앱이 받는 방식 → Gleo Interface (`assets/schema.json` + Intent). 코드 완료, **스키마 승인 대기** (제출 경로 문의 필요)
 - [ ] 앱 마켓 심사 기준과 플레오스 UI 디자인 가이드 (주행 중 UI 제한 포함)
 - [ ] 펫 모드 기본 온도 등 수치에 대한 수의사 자문
 - [ ] 패키지명 확정 (현재 `com.withpet.car`는 임시)
-- [ ] 안정 사운드 음원 확보 (자체 제작 또는 라이선스)
+- [ ] 안정 사운드 음원 확보 (자체 제작 또는 라이선스) → 합성 임시 음원 적용. 출시용 확정 필요
 
 ---
 

@@ -4,6 +4,7 @@ import com.withpet.car.di.ApplicationScope
 import com.withpet.car.domain.logic.EtaEstimator
 import com.withpet.car.domain.logic.RestAlertPolicy
 import com.withpet.car.domain.logic.RestSpotSelector
+import com.withpet.car.domain.model.OpenStatus
 import com.withpet.car.domain.model.RestAlertSettings
 import com.withpet.car.domain.model.WalkSpot
 import com.withpet.car.domain.repository.SettingsRepository
@@ -12,6 +13,7 @@ import com.withpet.car.platform.driving.DrivingStateProvider
 import com.withpet.car.platform.location.LocationProvider
 import com.withpet.car.platform.navigation.NavigationController
 import com.withpet.car.platform.voice.SpeechOutput
+import com.withpet.car.platform.voice.VoiceCommandSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +27,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
+import java.time.Clock
+import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -46,6 +50,8 @@ class RestAlertCoordinator @Inject constructor(
     private val location: LocationProvider,
     private val navigation: NavigationController,
     private val speech: SpeechOutput,
+    private val voice: VoiceCommandSource,
+    private val clock: Clock,
     @ApplicationScope private val scope: CoroutineScope,
 ) {
     private val policy = RestAlertPolicy()
@@ -80,14 +86,21 @@ class RestAlertCoordinator @Inject constructor(
 
         val current = withTimeoutOrNull(READ_TIMEOUT_MS) { location.currentLocation().firstOrNull() } ?: return@withLock
         val route = withTimeoutOrNull(READ_TIMEOUT_MS) { navigation.activeRoute().firstOrNull() }
-        val spot = RestSpotSelector.select(walkSpotRepository.getAll(), current, route) ?: return@withLock
+        // 지금 닫혀 있는 곳은 제안하지 않는다 (공원 대부분은 상시 개방)
+        val now = LocalDateTime.now(clock)
+        val open = walkSpotRepository.getAll().filter { it.statusAt(now) != OpenStatus.CLOSED }
+        val spot = RestSpotSelector.select(open, current, route) ?: return@withLock
         val eta = navigation.estimateEtaMinutes(spot.location).getOrElse {
             EtaEstimator.estimateMinutes(current, spot.location)
         }
         val suggestion = RestSuggestion(spot, minutes, eta)
         policy.onShown()
         _suggestion.value = suggestion
-        scope.launch { if (speech.isAvailable()) speech.speak(suggestion.message) }
+        scope.launch {
+            if (!speech.isAvailable() || speech.speak(suggestion.message).isFailure) return@launch
+            // 다 읽은 뒤에 듣기 시작해야 자기 목소리를 알아듣지 않는다. 그사이 버튼으로 답했으면 듣지 않는다.
+            if (_suggestion.value === suggestion) voice.listenForAnswer()
+        }
     }
 
     /** [추가]: 경로가 있으면 경유지로, 없으면 목적지로 안내한다. */

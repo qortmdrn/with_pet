@@ -12,8 +12,10 @@ import com.withpet.car.platform.phone.FakePhoneDialer
 import com.withpet.car.platform.phone.PhoneDialer
 import com.withpet.car.platform.vehicle.FakeVehicleControl
 import com.withpet.car.platform.vehicle.VehicleControl
+import com.withpet.car.platform.voice.ExternalActionHandler
 import com.withpet.car.platform.voice.FakeSpeechOutput
 import com.withpet.car.platform.voice.FakeVoiceCommandSource
+import com.withpet.car.platform.voice.NoExternalActions
 import com.withpet.car.platform.voice.SpeechOutput
 import com.withpet.car.platform.voice.VoiceCommandSource
 import dagger.Binds
@@ -32,5 +34,6 @@ abstract class PlatformModule {
     @Binds abstract fun driving(impl: FakeDrivingStateProvider): DrivingStateProvider
     @Binds abstract fun voice(impl: FakeVoiceCommandSource): VoiceCommandSource
     @Binds abstract fun speech(impl: FakeSpeechOutput): SpeechOutput
+    @Binds abstract fun externalActions(impl: NoExternalActions): ExternalActionHandler
     @Binds abstract fun volume(impl: FakeMediaVolumeControl): MediaVolumeControl
 }

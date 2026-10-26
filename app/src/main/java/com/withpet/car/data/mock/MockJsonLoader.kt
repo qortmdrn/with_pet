@@ -7,12 +7,10 @@ class MockJsonLoader(
     private val json: Json,
     private val readText: (fileName: String) -> String,
 ) {
-    fun walkSpots(): List<WalkSpotDto> = json.decodeFromString(readText(WALK_SPOTS))
     fun playlists(): List<PlaylistDto> = json.decodeFromString(readText(PLAYLISTS))
 
     companion object {
         const val DIR = "mock"
-        const val WALK_SPOTS = "walk_spots.json"
         const val PLAYLISTS = "playlists.json"
     }
 }

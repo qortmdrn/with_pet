@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -61,11 +60,15 @@ fun HomeScreen(
         PetCard(state, onOpenProfile)
         PetModeCard(state, viewModel::setPetMode)
 
-        // 주행 중 주요 버튼 3개 이하: 펫 모드 토글 + 산책 + 사운드. 응급은 상단 고정 버튼으로 대신한다.
+        // 주행 중: 펫 모드 토글 + 산책·동반 장소·사운드. 응급은 상단 고정 버튼으로 대신한다.
+        // 주요 버튼 3개 제한(7장)의 예외: 동반 장소를 주행 중에도 열 수 있게 하기로 결정 (7-1).
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             BigActionButton("산책 스팟", Icons.Filled.Forest, onOpenWalk, Modifier.weight(1f))
+            BigActionButton("동반 장소", Icons.Filled.Pets, onOpenPlace, Modifier.weight(1f))
             BigActionButton("안정 사운드", Icons.Filled.MusicNote, onOpenCalm, Modifier.weight(1f))
-            if (!state.restricted) {
+        }
+        if (!state.restricted) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 BigActionButton(
                     "응급",
                     Icons.Filled.LocalHospital,
@@ -74,11 +77,8 @@ fun HomeScreen(
                     containerColor = WithPetColors.Emergency,
                     contentColor = WithPetColors.OnEmergency,
                 )
+                BigActionButton("설정", Icons.Filled.Settings, onOpenSettings, Modifier.weight(1f))
             }
-        }
-        if (!state.restricted) {
-            BigActionButton("동반 장소", Icons.Filled.Pets, onOpenPlace, Modifier.fillMaxWidth())
-            BigActionButton("설정", Icons.Filled.Settings, onOpenSettings, Modifier.fillMaxWidth())
         }
     }
 }

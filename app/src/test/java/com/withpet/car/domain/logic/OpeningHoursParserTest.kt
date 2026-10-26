@@ -1,5 +1,6 @@
 package com.withpet.car.domain.logic
 
+import com.withpet.car.domain.model.HolidayKind
 import com.withpet.car.domain.model.OpeningHours
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -16,13 +17,13 @@ import java.time.LocalTime
 
 class OpeningHoursParserTest {
 
-    private fun days(hours: String, closed: String? = "연중무휴") = OpeningHoursParser.parse(hours, closed)?.map { it.dayOfWeek }
+    private fun days(hours: String, closed: String? = "연중무휴") = OpeningHoursParser.parse(hours, closed)?.weekly?.map { it.dayOfWeek }
 
     private fun hoursOf(day: DayOfWeek, open: String, close: String) = OpeningHours(day, LocalTime.parse(open), LocalTime.parse(close))
 
     @Test
     fun `매일 영업`() {
-        val result = OpeningHoursParser.parse("매일 10:00~22:00", "연중무휴")!!
+        val result = OpeningHoursParser.parse("매일 10:00~22:00", "연중무휴")!!.weekly
         assertEquals(DayOfWeek.entries, result.map { it.dayOfWeek })
         assertEquals(hoursOf(MONDAY, "10:00", "22:00"), result.first())
     }
@@ -30,20 +31,20 @@ class OpeningHoursParserTest {
     @Test
     fun `요일 범위와 한 자리 시각`() {
         assertEquals(listOf(TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY), days("화~일 9:00~18:00"))
-        assertEquals(LocalTime.of(9, 0), OpeningHoursParser.parse("화~일 9:00~18:00", null)!!.first().open)
+        assertEquals(LocalTime.of(9, 0), OpeningHoursParser.parse("화~일 9:00~18:00", null)!!.weekly.first().open)
     }
 
     @Test
     fun `여러 구간 - 쉼표로 이어진 요일 목록`() {
-        val result = OpeningHoursParser.parse("월, 수~금 15:00~21:30, 토~일 14:00~21:30", "매주 화요일")!!
+        val result = OpeningHoursParser.parse("월, 수~금 15:00~21:30, 토~일 14:00~21:30", "매주 화요일")!!.weekly
         assertEquals(listOf(MONDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY), result.map { it.dayOfWeek })
         assertEquals(LocalTime.of(14, 0), result.first { it.dayOfWeek == SATURDAY }.open)
     }
 
     @Test
     fun `24시간과 자정 넘김 - 24시는 자정으로`() {
-        assertEquals(hoursOf(MONDAY, "00:00", "00:00"), OpeningHoursParser.parse("매일 00:00~24:00", "연중무휴")!!.first())
-        assertEquals(hoursOf(TUESDAY, "18:00", "02:00"), OpeningHoursParser.parse("화~일 18:00~02:00", "매주 월요일")!!.first())
+        assertEquals(hoursOf(MONDAY, "00:00", "00:00"), OpeningHoursParser.parse("매일 00:00~24:00", "연중무휴")!!.weekly.first())
+        assertEquals(hoursOf(TUESDAY, "18:00", "02:00"), OpeningHoursParser.parse("화~일 18:00~02:00", "매주 월요일")!!.weekly.first())
     }
 
     @Test
@@ -54,9 +55,20 @@ class OpeningHoursParserTest {
     }
 
     @Test
-    fun `명절·공휴일·N째주 휴무는 요일로 표현할 수 없어 무시한다`() {
-        assertEquals(6, days("매일 09:00~18:00", "1월1일, 설, 추석 당일, 매주 월요일")!!.size)
+    fun `N째주 휴무는 strict가 아니면 무시한다`() {
         assertEquals(7, days("매일 09:00~18:00", "4째주 월요일")!!.size)
+    }
+
+    @Test
+    fun `공휴일 휴무는 종류별로 기록한다`() {
+        val schedule = OpeningHoursParser.parse("매일 09:00~18:00", "1월1일, 설, 추석 당일, 매주 월요일")!!
+        assertEquals(6, schedule.weekly.size)
+        assertEquals(setOf(HolidayKind.NEW_YEAR, HolidayKind.SEOLLAL, HolidayKind.CHUSEOK), schedule.closedOnHolidays)
+
+        assertEquals(HolidayKind.entries.toSet(), OpeningHoursParser.parse("매일 09:00~18:00", "매주 토, 일, 법정공휴일")!!.closedOnHolidays)
+        assertEquals(emptySet<HolidayKind>(), OpeningHoursParser.parse("매일 09:00~18:00", "연중무휴")!!.closedOnHolidays)
+        // "공휴일 다음날"은 날짜를 특정할 수 없어 미확인
+        assertNull(OpeningHoursParser.parse("매일 09:00~18:00", "매주 월요일, 법정공휴일 다음날"))
     }
 
     @Test
@@ -64,7 +76,7 @@ class OpeningHoursParserTest {
         assertNull(OpeningHoursParser.parse("매일 09:00~18:00", "4째주 월요일", strict = true))
         assertNull(OpeningHoursParser.parse("매일 09:00~18:00", "매주 일요일, 마지막주 수요일", strict = true))
         // 공휴일은 strict여도 무시 (요일로 표현 불가)
-        assertEquals(6, OpeningHoursParser.parse("매일 09:00~18:00", "매주 일요일, 법정공휴일", strict = true)!!.size)
+        assertEquals(6, OpeningHoursParser.parse("매일 09:00~18:00", "매주 일요일, 법정공휴일", strict = true)!!.weekly.size)
     }
 
     @Test

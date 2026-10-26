@@ -1,12 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Pleos Vehicle SDK: 펫 모드 공조·창문 (최소 권한만 선언) -->
+    <!-- Pleos Vehicle SDK: 펫 모드 공조·창문 (최소 권한만 선언)
+         CONTROL_* 권한은 Pleos 앱 마켓 사전 승인이 필요하다 (docs/pleos-sdk/app-review.md) -->
     <uses-permission android:name="pleos.car.permission.CAR_CLIMATE" />
     <uses-permission android:name="pleos.car.permission.CONTROL_CAR_CLIMATE" />
     <uses-permission android:name="pleos.car.permission.CAR_WINDOWS" />
     <uses-permission android:name="pleos.car.permission.CONTROL_CAR_WINDOWS" />
-    <!-- NaviHelper SDK: 길 안내·경유지 -->
+    <!-- NaviHelper SDK: 정보 조회·ETA(requestTrip) / 길 안내·경유지 / 내비 검색 화면 -->
     <uses-permission android:name="pleos.car.permission.NAVI_ROUTE" />
+    <uses-permission android:name="pleos.car.permission.NAVI_ROUTE_SEARCH" />
+    <uses-permission android:name="pleos.car.permission.NAVI_CUSTOM_MAP" />
     <!-- FusedLocation SDK: 차량 위치 (기기 안에서만 사용, 외부 전송 없음) -->
     <uses-permission android:name="pleos.car.permission.FUSED_LOCATION" />
+    <!-- TextToSpeech·SpeechToText SDK: 휴식 알림 음성 안내와 "응/아니" 답 인식 (ON_DEVICE) -->
+    <uses-permission android:name="pleos.car.permission.TTS_SERVICE" />
+    <uses-permission android:name="pleos.car.permission.STT_SERVICE" />
+
+    <!-- 전화: SDK에 API가 없어 표준 다이얼러에 번호만 채운다 (ACTION_DIAL, 권한 불필요). 다이얼러 존재 확인용 -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
+    </queries>
+
+    <application>
+        <!-- Gleo AI 음성 명령 (assets/schema.json의 함수 이름 = Intent action).
+             이미 떠 있는 화면이 onNewIntent로 받도록 singleTask -->
+        <activity
+            android:name=".MainActivity"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="FIND_EMERGENCY_VET" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="SET_PET_MODE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
 </manifest>

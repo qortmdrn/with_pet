@@ -10,8 +10,8 @@ import com.withpet.car.data.local.PetDatabase
 import com.withpet.car.data.mock.MockJsonLoader
 import com.withpet.car.data.repository.AssetHospitalRepository
 import com.withpet.car.data.repository.AssetPetPlaceRepository
+import com.withpet.car.data.repository.AssetWalkSpotRepository
 import com.withpet.car.data.repository.MockPlaylistRepository
-import com.withpet.car.data.repository.MockWalkSpotRepository
 import com.withpet.car.data.repository.RoomPetProfileRepository
 import com.withpet.car.domain.repository.CalmSoundPlayer
 import com.withpet.car.domain.repository.HospitalRepository
@@ -67,8 +67,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun walkSpotRepository(loader: MockJsonLoader): WalkSpotRepository =
-        MockWalkSpotRepository(loader, Dispatchers.IO)
+    fun walkSpotRepository(@ApplicationContext context: Context): WalkSpotRepository =
+        AssetWalkSpotRepository(Json { ignoreUnknownKeys = true }, { context.readAsset(AssetWalkSpotRepository.ASSET_PATH) }, Dispatchers.IO)
 
     @Provides
     @Singleton

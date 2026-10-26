@@ -22,7 +22,8 @@ data class HospitalDto(
 ) {
     fun toDomain(): Hospital {
         // 응급 모드: 특정 주에만 쉬는 병원은 진료 중으로 단정하지 않는다
-        val weekly = OpeningHoursParser.parse(hours, closedDays, strict = true).orEmpty()
+        val schedule = OpeningHoursParser.parse(hours, closedDays, strict = true)
+        val weekly = schedule?.weekly.orEmpty()
         return Hospital(
             id = id,
             name = name,
@@ -32,6 +33,7 @@ data class HospitalDto(
             is24Hours = weekly.size == 7 && weekly.all { it.isAllDay },
             weeklyHours = weekly,
             isPartner = false,
+            closedOnHolidays = schedule?.closedOnHolidays.orEmpty(),
         )
     }
 

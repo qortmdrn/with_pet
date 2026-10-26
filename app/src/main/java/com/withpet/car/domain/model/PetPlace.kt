@@ -19,6 +19,8 @@ data class PetPlace(
     val closedDaysText: String?,
     /** 비어 있으면 영업시간 미확인 */
     val weeklyHours: List<OpeningHours>,
+    /** 이 종류의 공휴일에는 휴무 */
+    val closedOnHolidays: Set<HolidayKind> = emptySet(),
     /** 원본 데이터의 최종작성일 (yyyy-MM-dd) */
     val updatedAt: String,
 ) {

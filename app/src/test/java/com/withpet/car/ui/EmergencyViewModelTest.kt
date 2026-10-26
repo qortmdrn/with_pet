@@ -44,6 +44,7 @@ class EmergencyViewModelTest {
     }
     private val dialer = mockk<PhoneDialer> {
         every { isCallCapable() } returns flowOf(true)
+        every { opensDialerOnly } returns false
         coEvery { call(any()) } returns Result.success(Unit)
     }
     private val location = mockk<LocationProvider> {

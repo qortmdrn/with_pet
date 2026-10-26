@@ -24,20 +24,24 @@ data class PetPlaceDto(
     val closedDays: String? = null,
     val updatedAt: String = "",
 ) {
-    fun toDomain() = PetPlace(
-        id = id,
-        name = name,
-        category = PetPlaceCategory.valueOf(category),
-        location = GeoPoint(lat, lng),
-        address = address,
-        phone = phone,
-        hasParking = parking,
-        sizeLimit = sizeLimit,
-        restriction = restriction,
-        extraFee = extraFee,
-        hoursText = hours,
-        closedDaysText = closedDays,
-        weeklyHours = OpeningHoursParser.parse(hours, closedDays).orEmpty(),
-        updatedAt = updatedAt,
-    )
+    fun toDomain(): PetPlace {
+        val schedule = OpeningHoursParser.parse(hours, closedDays)
+        return PetPlace(
+            id = id,
+            name = name,
+            category = PetPlaceCategory.valueOf(category),
+            location = GeoPoint(lat, lng),
+            address = address,
+            phone = phone,
+            hasParking = parking,
+            sizeLimit = sizeLimit,
+            restriction = restriction,
+            extraFee = extraFee,
+            hoursText = hours,
+            closedDaysText = closedDays,
+            weeklyHours = schedule?.weekly.orEmpty(),
+            closedOnHolidays = schedule?.closedOnHolidays.orEmpty(),
+            updatedAt = updatedAt,
+        )
+    }
 }

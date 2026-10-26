@@ -1,5 +1,6 @@
 package com.withpet.car.domain.logic
 
+import com.withpet.car.domain.model.HolidayKind
 import com.withpet.car.domain.model.Hospital
 import com.withpet.car.domain.model.OpenStatus
 import com.withpet.car.domain.model.OpeningHours
@@ -9,12 +10,16 @@ object OpenStatusCalculator {
 
     fun statusAt(hospital: Hospital, at: LocalDateTime): OpenStatus {
         if (hospital.is24Hours) return OpenStatus.OPEN
-        return statusAt(hospital.weeklyHours, at)
+        return statusAt(hospital.weeklyHours, at, hospital.closedOnHolidays)
     }
 
-    /** 비어 있으면 진료·영업 시간 미확인 */
-    fun statusAt(weeklyHours: List<OpeningHours>, at: LocalDateTime): OpenStatus {
+    /**
+     * @param weeklyHours 비어 있으면 진료·영업 시간 미확인
+     * @param closedOnHolidays 오늘이 이 종류의 공휴일이면 닫힘 ([KoreanHolidays])
+     */
+    fun statusAt(weeklyHours: List<OpeningHours>, at: LocalDateTime, closedOnHolidays: Set<HolidayKind> = emptySet()): OpenStatus {
         if (weeklyHours.isEmpty()) return OpenStatus.UNKNOWN
+        if (KoreanHolidays.kindOn(at.toLocalDate()) in closedOnHolidays) return OpenStatus.CLOSED
 
         val today = at.dayOfWeek
         val yesterday = today.minus(1)

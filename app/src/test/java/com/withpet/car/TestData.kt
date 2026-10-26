@@ -32,13 +32,23 @@ fun hospital(
 fun everyDay(open: String, close: String) =
     DayOfWeek.entries.map { OpeningHours(it, LocalTime.parse(open), LocalTime.parse(close)) }
 
-fun spot(id: String, location: GeoPoint, largeDog: Boolean = false, type: WalkSpotType = WalkSpotType.PARK) = WalkSpot(
+fun spot(
+    id: String,
+    location: GeoPoint,
+    largeDog: Boolean = false,
+    type: WalkSpotType = WalkSpotType.PARK,
+    hours: List<OpeningHours> = everyDay("00:00", "00:00"),
+) = WalkSpot(
     id = id,
     name = "스팟 $id",
     type = type,
     location = location,
+    address = "주소",
     leashRequired = true,
-    hasWasteBin = true,
-    hasWater = false,
-    largeDogAllowed = largeDog,
+    sizeLimit = if (largeDog) "모두 가능" else "소형",
+    restriction = null,
+    fee = null,
+    hoursText = null,
+    closedDaysText = null,
+    weeklyHours = hours,
 )

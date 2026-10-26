@@ -6,6 +6,8 @@ import ai.pleos.playground.navi.constants.WaypointIndex
 import ai.pleos.playground.navi.data.DestinationInfo
 import ai.pleos.playground.navi.data.NavigationScreenRequest
 import ai.pleos.playground.navi.data.RequestWaypointInfo
+import ai.pleos.playground.navi.data.TripInfo
+import ai.pleos.playground.navi.data.TripRequest
 import ai.pleos.playground.navi.data.WaypointInfo
 import ai.pleos.playground.navi.helper.NaviHelper
 import ai.pleos.playground.navi.helper.listener.NaviHelperEventListener
@@ -16,6 +18,7 @@ import com.withpet.car.domain.model.NamedPoint
 import com.withpet.car.domain.model.RouteInfo
 import com.withpet.car.domain.model.UnsupportedFeature
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
@@ -40,6 +43,9 @@ class PleosNavigationController @Inject constructor(
     private val mutex = Mutex()
     private var helper: NaviHelper? = null
     private val route = MutableStateFlow<RouteInfo?>(null)
+    // requestTrip 응답에는 요청 식별자가 없어 한 번에 하나씩만 요청한다
+    private val tripMutex = Mutex()
+    @Volatile private var pendingTrip: CompletableDeferred<TripInfo>? = null
 
     private suspend fun helper(): NaviHelper = mutex.withLock {
         helper ?: NaviHelper(context.applicationContext).also { created ->
@@ -95,9 +101,30 @@ class PleosNavigationController @Inject constructor(
         route.update { it?.copy(waypoints = it.waypoints + NamedPoint(point, name)) }
     }
 
-    /** 임의 목적지까지의 ETA 조회 API가 없다. 호출 측이 직선거리로 추정한다. */
-    override suspend fun estimateEtaMinutes(destination: GeoPoint): Result<Int> =
-        Result.failure(UnsupportedFeature("ETA 조회 미지원"))
+    /**
+     * requestTrip → onTripInfo로 임의 목적지까지 예상 소요 시간을 받는다 (docs/pleos-sdk/navihelper.md 4-2).
+     * TripInfo.eta는 "초 단위 ETA"라고만 되어 있어, 소요 시간이 아니라 시각(epoch 초)이면 현재 시각과의 차이로 바꾼다.
+     */
+    override suspend fun estimateEtaMinutes(destination: GeoPoint): Result<Int> = runCatching {
+        tripMutex.withLock {
+            val trip = CompletableDeferred<TripInfo>()
+            pendingTrip = trip
+            try {
+                helper().requestTrip(
+                    TripRequest(latitude = destination.lat, longitude = destination.lng, poiId = "", poiName = "", poiSubId = "0"),
+                )
+                etaMinutes(withTimeout(TRIP_TIMEOUT_MS) { trip.await() }.eta)
+            } finally {
+                pendingTrip = null
+            }
+        }
+    }
+
+    private fun etaMinutes(eta: Int): Int {
+        val seconds = if (eta > EPOCH_THRESHOLD_S) eta - System.currentTimeMillis() / 1000 else eta.toLong()
+        if (seconds !in 0..MAX_TRIP_S) throw IllegalStateException("ETA 값 이상: $eta")
+        return ((seconds + 59) / 60).toInt().coerceAtLeast(1)
+    }
 
     override suspend fun searchPlace(keyword: String): Result<Unit> = runCatching {
         helper().requestNavigationScreen(NavigationScreenRequest.SearchPlace(keyword))
@@ -142,12 +169,21 @@ class PleosNavigationController @Inject constructor(
         if (status == NavigationStatus.INACTIVE || status == NavigationStatus.FREE_DRIVE) route.value = null
     }
 
+    override fun onTripInfo(tripInfo: TripInfo) {
+        pendingTrip?.complete(tripInfo)
+    }
+
     override fun onError(errorCode: NaviErrorCode) {
         Log.w(TAG, "내비 오류: $errorCode")
+        if (errorCode == NaviErrorCode.CAUSE_SEARCH_TRIP) pendingTrip?.completeExceptionally(IllegalStateException("경로 시간 조회 실패"))
     }
 
     private companion object {
         const val TAG = "PleosNavigation"
         const val INIT_TIMEOUT_MS = 5_000L
+        const val TRIP_TIMEOUT_MS = 3_000L
+        // 이보다 크면 소요 초가 아니라 epoch 초로 본다 (약 3년)
+        const val EPOCH_THRESHOLD_S = 100_000_000
+        const val MAX_TRIP_S = 2L * 24 * 3600
     }
 }

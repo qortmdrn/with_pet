@@ -60,7 +60,7 @@ fun SettingsScreen(
                 SliderRow("뒷창문 개방", pm.rearWindowOpenPercent.toFloat(), 0f..30f, steps = 5, format = { "${it.roundToInt()}%" }) { v ->
                     viewModel.updatePetMode { it.copy(rearWindowOpenPercent = v.roundToInt()) }
                 }
-                SliderRow("미디어 볼륨", pm.mediaVolumePercent.toFloat(), 0f..100f, steps = 19, format = { "${it.roundToInt()}%" }) { v ->
+                SliderRow("안정 사운드 볼륨", pm.mediaVolumePercent.toFloat(), 0f..100f, steps = 19, format = { "${it.roundToInt()}%" }) { v ->
                     viewModel.updatePetMode { it.copy(mediaVolumePercent = v.roundToInt()) }
                 }
                 SwitchRow("안정 사운드 자동 재생", pm.autoPlayCalmSound) { v ->

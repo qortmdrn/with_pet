@@ -32,7 +32,7 @@ class GetNearbyPetPlacesUseCase @Inject constructor(
         val radius = if (inCategory.any { (_, d) -> d <= PRIMARY_RADIUS_KM }) PRIMARY_RADIUS_KM else EXPANDED_RADIUS_KM
         val places = inCategory
             .filter { (_, d) -> d <= radius }
-            .map { (place, d) -> NearbyPetPlace(place, d, OpenStatusCalculator.statusAt(place.weeklyHours, now)) }
+            .map { (place, d) -> NearbyPetPlace(place, d, OpenStatusCalculator.statusAt(place.weeklyHours, now, place.closedOnHolidays)) }
             .sortedWith(compareBy({ it.status.rank }, { it.distanceKm }))
             .take(MAX_RESULTS)
         return NearbyPetPlaces(places, radius)

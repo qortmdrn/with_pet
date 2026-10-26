@@ -163,6 +163,11 @@ private fun SelectionPanel(selection: EmergencySelection, onBackToList: () -> Un
         Text(hospital.name, style = MaterialTheme.typography.headlineMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
         when {
             result == null -> CircularProgressIndicator()
+            result.callStarted && result.needsTapToCall -> {
+                // 다이얼러에 번호를 채웠다. 다이얼러를 닫고 돌아와도 번호가 보이게 한다
+                Text(hospital.phone.orEmpty(), fontSize = 56.sp, fontWeight = FontWeight.Bold, color = WithPetColors.Primary)
+                Line(Icons.Filled.Call, "다이얼러에서 통화 버튼을 눌러 주세요")
+            }
             result.callStarted -> Line(Icons.Filled.Call, "전화를 연결하고 있어요")
             hospital.phone == null -> Text("등록된 전화번호가 없어요", style = MaterialTheme.typography.titleMedium)
             else -> {

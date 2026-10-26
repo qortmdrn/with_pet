@@ -12,6 +12,8 @@ data class Hospital(
     val is24Hours: Boolean,
     val weeklyHours: List<OpeningHours>,   // 비어 있으면 진료 시간 미확인
     val isPartner: Boolean,
+    /** 이 종류의 공휴일에는 휴진 */
+    val closedOnHolidays: Set<HolidayKind> = emptySet(),
 )
 
 /** close가 open보다 이르거나 같으면 자정을 넘겨 다음 날 close까지 영업한다. */

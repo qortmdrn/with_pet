@@ -1,9 +1,7 @@
 package com.withpet.car.data
 
-import com.withpet.car.CITY_HALL
 import com.withpet.car.data.mock.MockJsonLoader
 import com.withpet.car.domain.model.CalmSituation
-import com.withpet.car.domain.model.WalkSpotType
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -15,15 +13,6 @@ class MockJsonLoaderTest {
 
     private val loader = MockJsonLoader(Json { ignoreUnknownKeys = true }) { name ->
         File("src/main/assets/${MockJsonLoader.DIR}/$name").readText()
-    }
-
-    @Test
-    fun `산책 스팟 15곳 - 유형별 고르게, 대형견 가능 5곳, 반경 15km`() {
-        val spots = loader.walkSpots().map { it.toDomain() }
-        assertEquals(15, spots.size)
-        assertEquals(5, spots.count { it.largeDogAllowed })
-        WalkSpotType.entries.forEach { type -> assertEquals(3, spots.count { it.type == type }) }
-        assertTrue(spots.all { CITY_HALL.distanceKmTo(it.location) <= 15.0 })
     }
 
     @Test

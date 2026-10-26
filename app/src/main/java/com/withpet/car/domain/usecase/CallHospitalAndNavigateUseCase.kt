@@ -12,6 +12,8 @@ data class CallAndNavigateResult(
     /** false: 휴대폰 미연결·발신 실패·번호 없음. UI는 번호를 크게 보여 준다(있으면). */
     val callStarted: Boolean,
     val guidanceStarted: Boolean,
+    /** 다이얼러에 번호만 채웠다. 사용자가 통화 버튼을 눌러야 걸린다 (Pleos: ACTION_DIAL) */
+    val needsTapToCall: Boolean = false,
 )
 
 /** 병원 선택 시 전화 연결과 길 안내를 동시에 시작한다 (명세 7-2 6~7). */
@@ -28,6 +30,7 @@ class CallHospitalAndNavigateUseCase @Inject constructor(
             val phone = hospital.phone ?: return@async false
             capable && runCatching { dialer.call(phone).getOrThrow() }.isSuccess
         }
-        CallAndNavigateResult(callStarted = call.await(), guidanceStarted = guidance.await())
+        val callStarted = call.await()
+        CallAndNavigateResult(callStarted, guidance.await(), needsTapToCall = callStarted && dialer.opensDialerOnly)
     }
 }

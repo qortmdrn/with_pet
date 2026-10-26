@@ -6,11 +6,13 @@
 출력
 - pet_places.json: 카페·식당 / 여행지 / 문화시설(박물관·미술관·문예회관) 중 '반려동물 동반 가능정보 = Y'
 - hospitals.json: 동물병원 (응급 모드)
+- walk_spots.json: 여행지 중 산책할 만한 곳 (반려견 놀이터·공원·산책로·물가·쉼터). 산책 스팟과 휴식 알림에서 쓴다.
 
 - 운영시간·휴무일은 원문 그대로 둔다. 해석은 앱의 OpeningHoursParser가 한다.
 - 같은 시설(이름+주소)이 여러 번 있으면 최종작성일이 가장 최근인 것만 남긴다.
 """
 import csv
+import re
 import hashlib
 import json
 import sys
@@ -28,6 +30,22 @@ EMPTY = {"", "정보없음", "해당없음", "제한사항 없음", "없음"}
 # 대한민국 범위 밖 좌표는 버린다
 LAT_RANGE = (33.0, 39.0)
 LNG_RANGE = (124.0, 132.0)
+
+
+def walk_type(r):
+    """여행지를 산책 스팟 유형으로. 사찰·마을·전망대 같은 관광지는 None(산책 스팟 아님)."""
+    name, desc = r["시설명"], r["기본 정보_장소설명"]
+    if re.search(r"반려견|애견|강아지|펫", name) or re.search(r"강아지놀이터|운동장", desc):
+        return "DOG_PARK"
+    if re.search(r"휴게소|쉼터", name):
+        return "REST_AREA"
+    if re.search(r"둘레길|산책로|숲길|자락길|올레|오름|산림욕장|수목원|휴양림|숲$|숲 |길$|생태", name):
+        return "TRAIL"
+    if desc.startswith("공원") or re.search(r"공원|유원지|광장|체육", name):
+        return "PARK"
+    if re.search(r"해수욕장|해변|호수|저수지|유수지|습지", name):
+        return "WATERSIDE"
+    return None
 
 
 def value(raw):
@@ -70,7 +88,7 @@ def keep_latest(items, item):
 
 
 def main(src, out_dir):
-    places, hospitals = {}, {}
+    places, hospitals, walks = {}, {}, {}
     with open(src, encoding="utf-8-sig") as f:
         for r in csv.DictReader(f):
             loc = location(r)
@@ -79,6 +97,18 @@ def main(src, out_dir):
             if r["카테고리3"] == "동물병원":
                 keep_latest(hospitals, common(r, *loc))
                 continue
+            if r["카테고리3"] == "여행지" and r["반려동물 동반 가능정보"] == "Y":
+                spot_type = walk_type(r)
+                if spot_type is not None:
+                    restriction = value(r["반려동물 제한사항"])
+                    keep_latest(walks, {
+                        **common(r, *loc),
+                        "type": spot_type,
+                        "leashRequired": restriction is not None and "목줄" in restriction,
+                        "sizeLimit": value(r["입장 가능 동물 크기"]),
+                        "restriction": restriction,
+                        "fee": value(r["입장(이용료)가격 정보"]),
+                    })
             category = CATEGORY.get(r["카테고리3"])
             # 약국 등 의료 시설은 동반 장소에 넣지 않는다
             if category is None or r["카테고리2"] == "반려의료" or r["반려동물 동반 가능정보"] != "Y":
@@ -94,14 +124,15 @@ def main(src, out_dir):
 
     write(f"{out_dir}/pet_places.json", sorted(places.values(), key=lambda p: (p["category"], p["name"], p["id"])))
     write(f"{out_dir}/hospitals.json", sorted(hospitals.values(), key=lambda p: (p["name"], p["id"])))
+    write(f"{out_dir}/walk_spots.json", sorted(walks.values(), key=lambda p: (p["type"], p["name"], p["id"])), "type")
 
 
-def write(path, items):
+def write(path, items, group_key="category"):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False, separators=(",", ":"))
     counts = {}
     for item in items:
-        counts[item.get("category", "-")] = counts.get(item.get("category", "-"), 0) + 1
+        counts[item.get(group_key, "-")] = counts.get(item.get(group_key, "-"), 0) + 1
     print(f"{len(items)}곳 → {path} {counts}")
 
 

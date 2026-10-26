@@ -102,6 +102,8 @@ dependencies {
     "pleosImplementation"(libs.pleos.vehicle)
     "pleosImplementation"(libs.pleos.navi.helper)
     "pleosImplementation"(libs.pleos.fused.location)
+    "pleosImplementation"(libs.pleos.text.to.speech)
+    "pleosImplementation"(libs.pleos.speech.to.text)
 
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
