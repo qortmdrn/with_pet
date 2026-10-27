@@ -49,6 +49,7 @@ private fun DebugScreen(viewModel: DebugViewModel = hiltViewModel()) {
     val minutes by viewModel.drivingMinutes.collectAsStateWithLifecycle()
     val phone by viewModel.phoneConnected.collectAsStateWithLifecycle()
     val windowSupported by viewModel.windowSupported.collectAsStateWithLifecycle()
+    val raining by viewModel.raining.collectAsStateWithLifecycle()
     val route by viewModel.route.collectAsStateWithLifecycle()
     val vehicle by viewModel.vehicleSummary.collectAsStateWithLifecycle()
 
@@ -87,6 +88,7 @@ private fun DebugScreen(viewModel: DebugViewModel = hiltViewModel()) {
             Text("차량 · 휴대폰", style = MaterialTheme.typography.titleMedium)
             ToggleRow("휴대폰 블루투스 연결", phone, viewModel::setPhoneConnected)
             ToggleRow("창문 제어 지원 차량", windowSupported, viewModel::setWindowSupported)
+            ToggleRow("비 오는 중 (와이퍼 작동)", raining, viewModel::setRaining)
             Text(vehicle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         SectionCard {

@@ -6,18 +6,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -25,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.withpet.car.domain.model.PetModeSettings
 import com.withpet.car.domain.model.RestAlertSettings
 import com.withpet.car.ui.components.BigActionButton
 import com.withpet.car.ui.components.ParkedOnly
@@ -57,7 +62,29 @@ fun SettingsScreen(
                 SliderRow("풍량", pm.fanLevel.toFloat(), 1f..5f, steps = 3, format = { "${it.roundToInt()}단계" }) { v ->
                     viewModel.updatePetMode { it.copy(fanLevel = v.roundToInt()) }
                 }
-                SliderRow("뒷창문 개방", pm.rearWindowOpenPercent.toFloat(), 0f..30f, steps = 5, format = { "${it.roundToInt()}%" }) { v ->
+                var confirmWindow by remember { mutableStateOf(false) }
+                SwitchRow("뒷창문 환기", pm.rearWindowEnabled) { v ->
+                    if (v) confirmWindow = true else viewModel.updatePetMode { it.copy(rearWindowEnabled = false) }
+                }
+                if (confirmWindow) {
+                    RearWindowConfirmDialog(
+                        onConfirm = {
+                            confirmWindow = false
+                            viewModel.updatePetMode { it.copy(rearWindowEnabled = true) }
+                        },
+                        onDismiss = { confirmWindow = false },
+                    )
+                }
+                val minWindow = PetModeSettings.REAR_WINDOW_MIN_PERCENT.toFloat()
+                val maxWindow = PetModeSettings.REAR_WINDOW_MAX_PERCENT.toFloat()
+                SliderRow(
+                    "뒷창문 개방",
+                    pm.rearWindowOpenPercent.toFloat().coerceIn(minWindow, maxWindow),
+                    minWindow..maxWindow,
+                    steps = (maxWindow - minWindow).toInt() - 1,
+                    format = { "${it.roundToInt()}%" },
+                    enabled = pm.rearWindowEnabled,
+                ) { v ->
                     viewModel.updatePetMode { it.copy(rearWindowOpenPercent = v.roundToInt()) }
                 }
                 SliderRow("안정 사운드 볼륨", pm.mediaVolumePercent.toFloat(), 0f..100f, steps = 19, format = { "${it.roundToInt()}%" }) { v ->
@@ -95,6 +122,7 @@ private fun SliderRow(
     range: ClosedFloatingPointRange<Float>,
     steps: Int,
     format: (Float) -> String,
+    enabled: Boolean = true,
     onChangeFinished: (Float) -> Unit,
 ) {
     var current by remember(value) { mutableFloatStateOf(value) }
@@ -109,6 +137,7 @@ private fun SliderRow(
             onValueChangeFinished = { onChangeFinished(current) },
             valueRange = range,
             steps = steps,
+            enabled = enabled,
         )
     }
 }
@@ -119,4 +148,25 @@ private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Un
         Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         Switch(checked = checked, onCheckedChange = onChange)
     }
+}
+
+/** 뒷창문 환기를 켤 때 한 번 확인한다 (명세 7-6). */
+@Composable
+private fun RearWindowConfirmDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("뒷창문 환기를 켤까요?", style = MaterialTheme.typography.titleLarge) },
+        text = {
+            Text(
+                "펫 모드를 켜면 뒷창문이 조금 열려요. 반려동물이 창밖으로 몸을 내밀거나 창틈에 끼이지 않도록 이동장이나 전용 안전벨트를 사용해 주세요. 비가 오면 펫 모드를 켤 때 창문을 열지 않지만, 달리는 중에 비가 오기 시작하면 직접 닫아 주세요. 고속도로에서는 꺼 두는 것이 좋아요.",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, modifier = Modifier.size(width = 160.dp, height = 76.dp)) { Text("켜기", style = MaterialTheme.typography.titleMedium) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.size(width = 160.dp, height = 76.dp)) { Text("취소", style = MaterialTheme.typography.titleMedium) }
+        },
+    )
 }

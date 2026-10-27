@@ -37,6 +37,7 @@ class DebugViewModel @Inject constructor(
     val drivingMinutes: StateFlow<Int> = driving.currentMinutes
     val phoneConnected: StateFlow<Boolean> = phone.isConnected
     val windowSupported: StateFlow<Boolean> = vehicle.isWindowSupported
+    val raining: StateFlow<Boolean> = vehicle.isRainingNow
 
     val route: StateFlow<String?> = navigation.currentRoute
         .map { r -> r?.let { (listOf("목적지: ${it.destination.name}") + it.waypoints.map { w -> "경유: ${w.name}" }).joinToString(" · ") } }
@@ -46,8 +47,11 @@ class DebugViewModel @Inject constructor(
         vehicle.cabinTemperature(),
         vehicle.fanLevel,
         vehicle.rearWindow,
+        vehicle.rearWindowLock,
         volume.currentVolume,
-    ) { temp, fan, window, vol -> "온도 ${temp}℃ · 풍량 ${fan} · 뒷창문 ${window ?: "-"}% · 볼륨 ${vol}%" }
+    ) { temp, fan, window, lock, vol ->
+        "온도 ${temp}℃ · 풍량 ${fan} · 뒷창문 ${window ?: "-"}%${if (lock) "(잠금)" else ""} · 볼륨 ${vol}%"
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
 
     fun setLocation(point: GeoPoint?) = locationProvider.setLocation(point)
@@ -55,6 +59,7 @@ class DebugViewModel @Inject constructor(
     fun setDrivingMinutes(minutes: Int) = driving.setContinuousDrivingMinutes(minutes)
     fun setPhoneConnected(value: Boolean) = phone.setConnected(value)
     fun setWindowSupported(value: Boolean) = vehicle.setWindowSupported(value)
+    fun setRaining(value: Boolean) = vehicle.setRaining(value)
     fun sendVoice(command: VoiceCommand) = voice.send(command)
     fun clearRoute() = navigation.clearRoute()
 

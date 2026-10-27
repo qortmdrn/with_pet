@@ -16,10 +16,14 @@ class FakeVehicleControl @Inject constructor() : VehicleControl {
     private val fan = MutableStateFlow(1)
     private val window = MutableStateFlow<Int?>(0)
     private val windowSupported = MutableStateFlow(true)
+    private val raining = MutableStateFlow(false)
+    private val windowLock = MutableStateFlow(false)
 
     val fanLevel: StateFlow<Int> = fan.asStateFlow()
     val rearWindow: StateFlow<Int?> = window.asStateFlow()
     val isWindowSupported: StateFlow<Boolean> = windowSupported.asStateFlow()
+    val isRainingNow: StateFlow<Boolean> = raining.asStateFlow()
+    val rearWindowLock: StateFlow<Boolean> = windowLock.asStateFlow()
 
     override suspend fun setCabinTemperature(celsius: Float): Result<Unit> {
         temperature.value = celsius
@@ -41,6 +45,20 @@ class FakeVehicleControl @Inject constructor() : VehicleControl {
 
     override fun rearWindowOpenPercent(): Flow<Int?> =
         if (windowSupported.value) window.asStateFlow() else MutableStateFlow(null)
+
+    override suspend fun isRaining(): Boolean = raining.value
+
+    override suspend fun setRearWindowLock(locked: Boolean): Result<Unit> {
+        if (!windowSupported.value) return Result.failure(UnsupportedFeature("창문 잠금 미지원"))
+        windowLock.value = locked
+        return Result.success(Unit)
+    }
+
+    override suspend fun rearWindowLocked(): Boolean? = if (windowSupported.value) windowLock.value else null
+
+    fun setRaining(value: Boolean) {
+        raining.value = value
+    }
 
     fun setWindowSupported(supported: Boolean) {
         windowSupported.value = supported

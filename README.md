@@ -26,11 +26,12 @@ debug APK는 아이콘 라이브러리 때문에 60MB 이상이다. 콜드 스�
 
 ## 디버그 메뉴 (fake)
 
-상단 벌레 아이콘. 위치 프리셋(위치 미수신 포함), 정차/주행 전환, 연속 주행 시간, 휴대폰 연결, 창문 미지원 차량, 샘플 경로, 음성 명령 버튼.
+상단 벌레 아이콘. 위치 프리셋(위치 미수신 포함), 정차/주행 전환, 연속 주행 시간, 휴대폰 연결, 창문 미지원 차량, 비 오는 중(와이퍼 작동), 샘플 경로, 음성 명령 버튼.
 
 ## 명세 대비 추가·변경
 
-- `VehicleControl.rearWindowOpenPercent()`: 펫 모드 OFF 시 창문 복원값을 읽기 위해 추가. 값을 모르면 창문을 닫는다.
+- `VehicleControl.rearWindowOpenPercent()`: 펫 모드가 연 뒷창문의 복원값을 읽기 위해 추가. 값을 모르면 닫는다.
+- 뒷창문 환기는 선택 기능(기본 꺼짐, 최대 10%)이다. 펫 모드를 켤 때 와이퍼로 비를 추정해 비가 오면 열지 않고, 열면 뒷창문을 잠근다. 펫 모드 OFF 때 창문을 자동으로 닫지 않고(끼임 방지), 정차 중 홈의 [뒷창문 닫기]로 되돌린다 (명세 7-6).
 - `MediaVolumeControl`, `SpeechOutput` 어댑터: 볼륨 제어·TTS 방식이 확인 필요(13장)라 인터페이스로 분리.
 - 휴식 알림 문구의 "10분 뒤"는 쉼터까지의 ETA로 계산한다.
 - 휴식 알림 [추가] 시 경로가 없으면 해당 장소로 길 안내를 시작한다.
@@ -43,7 +44,7 @@ SDK 문서 정리본(API 시그니처·권한·제약, 출처 URL 포함)은 [`d
 
 | 어댑터 | SDK | 구현 |
 | --- | --- | --- |
-| `PleosVehicleControl` | Vehicle 2.3.2 | 온도·풍량: 지원 좌석 구역 전체에 설정. 뒷창문: 2열 창문, 0~100%를 차량 위치 범위로 변환. 쓰기 권한이 없거나 지원 구역이 없으면 `UnsupportedFeature` |
+| `PleosVehicleControl` | Vehicle 2.3.2 | 온도·풍량: 지원 좌석 구역 전체에 설정. 뒷창문: 2열 창문, 0~100%를 차량 위치 범위로 변환, 잠금은 `setWindowLock`. 비: 앞 와이퍼 스위치·작동 상태로 추정(`WiperRain`). 쓰기 권한이 없거나 지원 구역이 없으면 `UnsupportedFeature` |
 | `PleosNavigationController` | NaviHelper 3.0.5 | `requestRoute` / `addWaypoint`(최대 2곳). 장소 검색은 `requestNavigationScreen(SearchPlace)`. ETA는 `requestTrip` → `onTripInfo`(한 번에 하나씩, 3초 제한, 실패 시 직선거리 추정) |
 | `PleosLocationProvider` | FusedLocation 1.1.3 | 위치 구독, 실패 시 "위치 미수신" 처리 |
 | `PleosDrivingStateProvider` | (Android) | 공개 주행 상태 API가 없어 `CarUxRestrictions` DO 요구를 주행 중으로 본다 |
@@ -63,6 +64,7 @@ adb shell am start -a SET_PET_MODE -n com.withpet.car/.MainActivity --es ACTION_
 
 ### 에뮬레이터에서 확인할 것
 
+- 뒷창문 10%가 실제로 몇 cm 열리는지 (반려동물 머리가 빠지지 않는 폭인지 보고 `REAR_WINDOW_MAX_PERCENT` 조정), 와이퍼 스위치·상태가 읽히는지(AUTO일 때 `WiperState`가 비에 따라 바뀌는지), 창문 잠금 중에도 운전석 마스터 스위치로 뒷창문을 닫을 수 있는지
 - 창문 위치 최솟값이 '완전히 닫힘'인지 (`WindowPositionMapping`의 가정). 문서에는 최솟값·최댓값의 의미가 없고, AAOS 정의상 틸트 창(선루프 등)은 최솟값이 음수일 수 있다
 - `requestRoute`·`requestTrip`에 POI ID 없이(빈 문자열) 좌표만으로 경로·ETA가 잡히는지 (문서상 poiId는 필수 인자)
 - `TripInfo.eta`가 소요 초인지 도착 시각인지 (코드는 둘 다 처리), 활성 경로 없이도 `requestTrip`이 되는지, 응답 시간 (응급 목록은 상위 5곳 ETA를 1.5초 안에 다 받아야 씀)
@@ -99,5 +101,6 @@ python3 scripts/build_public_data.py data/facilities_with_pet.csv app/src/main/a
   - 오터치로 의도치 않은 발신이 생길 수 있다. 필요하면 자동 선택 시 길 안내만 하고 전화는 버튼으로 거는 방식 검토
   - "다른 병원 보기"로 다시 고르면 두 번째 발신이 나가며, 먼저 건 통화는 앱이 끊지 않는다
   - 병원 번호는 **실제 번호**(`assets/data/hospitals.json`)다. 지금은 fake 빌드는 토스트만, pleos 빌드는 다이얼러에 번호만 채우지만, 자동 발신으로 바꾸는 순간 테스트 중에도 실제 병원으로 전화가 나간다. 바꾸기 전에 테스트용 발신 차단 방안을 정할 것
+- 안정 사운드는 "반려동물을 위한 편안한 차량 내 청각 환경"으로만 소개한다. 멀미·불안 완화 효과를 뒷받침할 근거가 없으므로 스토어 설명·심사 자료에 효과를 주장하는 표현을 쓰지 않는다 (기획서 7-5)
 - 안정 사운드 음원: 지금은 `scripts/generate_calm_sounds.py`로 합성한 임시 음원(곡당 60초 루프, AAC 64kbps, 총 약 4MB). 출시 전 실제 차량 스피커로 들어 보고, 필요하면 라이선스 음원이나 작곡으로 교체. 심사 기준의 "임시 콘텐츠 금지"에 걸릴 수 있으니 제출 전 확정할 것
 - 패키지명 확정, 릴리스 서명

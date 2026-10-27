@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.filled.Forest
 import androidx.compose.material.icons.filled.LocalHospital
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Window
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -59,6 +61,13 @@ fun HomeScreen(
     ) {
         PetCard(state, onOpenProfile)
         PetModeCard(state, viewModel::setPetMode)
+        // 펫 모드가 연 뒷창문은 OFF 때 자동으로 닫지 않는다(끼임 방지). 정차 중에 사용자가 확인하고 닫는다 (7-6).
+        if (state.petMode.rearWindowLeftOpen && !state.restricted) {
+            SectionCard {
+                Text("반려동물이 창문에서 떨어져 있는지 확인한 뒤 닫아 주세요", style = MaterialTheme.typography.bodyLarge)
+                BigActionButton("뒷창문 닫기", Icons.Filled.Window, viewModel::closeRearWindow, Modifier.fillMaxWidth())
+            }
+        }
 
         // 주행 중: 펫 모드 토글 + 산책·동반 장소·사운드. 응급은 상단 고정 버튼으로 대신한다.
         // 주요 버튼 3개 제한(7장)의 예외: 동반 장소를 주행 중에도 열 수 있게 하기로 결정 (7-1).

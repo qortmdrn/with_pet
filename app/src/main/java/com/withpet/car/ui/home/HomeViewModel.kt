@@ -62,4 +62,8 @@ class HomeViewModel @Inject constructor(
     fun setPetMode(on: Boolean) {
         viewModelScope.launch { if (on) petModeManager.turnOn() else petModeManager.turnOff() }
     }
+
+    fun closeRearWindow() {
+        viewModelScope.launch { petModeManager.closeRearWindow() }
+    }
 }

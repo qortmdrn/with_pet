@@ -7,6 +7,8 @@ import ai.pleos.playground.vehicle.api.model.capability.AccessType
 import ai.pleos.playground.vehicle.api.model.capability.AreaBounds
 import ai.pleos.playground.vehicle.api.model.capability.CapabilityConfig
 import ai.pleos.playground.vehicle.constant.area.WindowValue
+import ai.pleos.playground.vehicle.constant.control.WiperState
+import ai.pleos.playground.vehicle.constant.control.WiperSwitch
 import ai.pleos.playground.vehicle.constant.unit.TemperatureUnit
 import android.content.Context
 import android.util.Log
@@ -30,6 +32,7 @@ import kotlin.math.roundToInt
  * Pleos Vehicle SDK 어댑터.
  * - 공조(온도·풍량): 차량이 지원한다고 알려 준 모든 좌석 구역에 적용
  * - 창문: 2열(뒷좌석) 창문만, 앱의 0~100%를 차량이 알려 준 위치 범위로 변환
+ * - 비: 앞 와이퍼 스위치·작동 상태로 추정 ([WiperRain])
  */
 @Singleton
 class PleosVehicleControl @Inject constructor(
@@ -90,6 +93,44 @@ class PleosVehicleControl @Inject constructor(
         emit(percent)
     }
 
+    override suspend fun isRaining(): Boolean? {
+        val wiper = runCatching { vehicle().getWiper() }.getOrNull() ?: return null
+        // 둘 중 하나만 읽혀도 판단할 수 있게 따로 읽는다
+        val switch = runCatching {
+            pleosCall<WiperSwitch?>(WIPER_TIMEOUT_MS) { ok, fail -> wiper.getCurrentWiperSwitch(FRONT_WINDSHIELD, ok, fail) }
+        }.onFailure { Log.w(TAG, "와이퍼 스위치를 읽지 못함", it) }.getOrNull()
+        val state = runCatching {
+            pleosCall<WiperState?>(WIPER_TIMEOUT_MS) { ok, fail -> wiper.getCurrentWiperState(FRONT_WINDSHIELD, ok, fail) }
+        }.onFailure { Log.w(TAG, "와이퍼 상태를 읽지 못함", it) }.getOrNull()
+        return WiperRain.isRaining(switch, state)
+    }
+
+    override suspend fun setRearWindowLock(locked: Boolean): Result<Unit> = runCatching {
+        val window = vehicle().getWindow()
+        rearLockAreas(window, write = true).forEach { area ->
+            pleosCall<Unit> { ok, fail -> window.setWindowLock(area, locked, { _, _ -> ok(Unit) }, fail) }
+        }
+    }
+
+    override suspend fun rearWindowLocked(): Boolean? = runCatching {
+        val window = vehicle().getWindow()
+        val area = rearLockAreas(window, write = false).first()
+        pleosCall<Boolean?> { ok, fail -> window.getCurrentWindowLockState(area, ok, fail) }
+    }.onFailure { Log.w(TAG, "뒷창문 잠금 상태를 읽지 못함", it) }.getOrNull()
+
+    private suspend fun rearLockAreas(window: ai.pleos.playground.vehicle.api.Window, write: Boolean): List<WindowArea> {
+        val (config, areas) = try {
+            pleosCall<Pair<CapabilityConfig, List<WindowArea>>> { ok, fail ->
+                window.checkWindowLockCapabilities({ config, areas -> ok(config to areas) }, fail)
+            }
+        } catch (e: Exception) {
+            throw UnsupportedFeature("창문 잠금 미지원: ${e.message}")
+        }
+        if (!config.accessType.allows(write)) throw UnsupportedFeature("창문 잠금 미지원")
+        return areas.filter { area -> area.values.any { it in REAR_WINDOWS } }
+            .ifEmpty { throw UnsupportedFeature("뒷창문 잠금 미지원") }
+    }
+
     /** 실내 현재 온도. 변경 알림 대신 주기적으로 읽는다. */
     override fun cabinTemperature(): Flow<Float?> = flow {
         val area = runCatching {
@@ -138,17 +179,41 @@ class PleosVehicleControl @Inject constructor(
         } catch (e: Exception) {
             throw UnsupportedFeature("$feature 미지원: ${e.message}")
         }
-        val access = result.config.accessType
-        val allowed = if (write) access == AccessType.WRITE || access == AccessType.READ_WRITE
-        else access == AccessType.READ || access == AccessType.READ_WRITE
-        if (!allowed || result.areas.isEmpty()) throw UnsupportedFeature("$feature 미지원")
+        if (!result.config.accessType.allows(write) || result.areas.isEmpty()) throw UnsupportedFeature("$feature 미지원")
         return result.areas
     }
+
+    private fun AccessType.allows(write: Boolean): Boolean =
+        if (write) this == AccessType.WRITE || this == AccessType.READ_WRITE
+        else this == AccessType.READ || this == AccessType.READ_WRITE
 
     private companion object {
         const val TAG = "PleosVehicleControl"
         const val TEMPERATURE_POLL_MS = 30_000L
+        const val WIPER_TIMEOUT_MS = 1_000L
         val REAR_WINDOWS = setOf(WindowValue.ROW_2_LEFT, WindowValue.ROW_2_RIGHT)
+        val FRONT_WINDSHIELD = WindowArea(WindowValue.FRONT_WINDSHIELD)
+    }
+}
+
+/**
+ * 앞 와이퍼로 비 여부를 추정한다. SDK에 비 감지 센서 API가 없어 간접 추정이다 (docs/pleos-sdk/vehicle.md 4장).
+ * - 간헐·연속 스위치: 운전자가 비 때문에 켠 것으로 본다
+ * - AUTO: 스위치로는 알 수 없어 실제 작동(ON) 여부로 판단
+ * - MIST(한 번 닦기)·OFF: 비 아님. 단 작동 중(ON)이면 워셔액일 수도 있지만 안전하게 비로 본다
+ * - 둘 다 모르면 null
+ */
+internal object WiperRain {
+    fun isRaining(switch: WiperSwitch?, state: WiperState?): Boolean? = when (switch) {
+        WiperSwitch.INTERMITTENT_LEVEL_1, WiperSwitch.INTERMITTENT_LEVEL_2, WiperSwitch.INTERMITTENT_LEVEL_3,
+        WiperSwitch.INTERMITTENT_LEVEL_4, WiperSwitch.INTERMITTENT_LEVEL_5,
+        WiperSwitch.CONTINUOUS_LEVEL_1, WiperSwitch.CONTINUOUS_LEVEL_2, WiperSwitch.CONTINUOUS_LEVEL_3,
+        WiperSwitch.CONTINUOUS_LEVEL_4, WiperSwitch.CONTINUOUS_LEVEL_5 -> true
+        else -> when (state) {
+            WiperState.ON -> true
+            WiperState.OFF -> false
+            else -> if (switch == WiperSwitch.OFF || switch == WiperSwitch.MIST) false else null
+        }
     }
 }
 

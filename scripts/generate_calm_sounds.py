@@ -4,7 +4,8 @@
 사용: python3 scripts/generate_calm_sounds.py app/src/main/res/raw
 
 - 곡마다 60초, 끝과 시작을 겹쳐(crossfade) 반복 재생해도 끊김이 없다 (CalmPlaybackService는 REPEAT_MODE_ALL).
-- 강아지 안정용 원칙: 느린 템포, 중저음 위주, 갑작스러운 소리 없음, 고음(약 4kHz 이상) 감쇠.
+- 편안한 차량 내 청각 환경을 위한 원칙: 느린 템포, 중저음 위주, 갑작스러운 소리 없음, 고음(약 4kHz 이상) 감쇠.
+  멀미·불안 완화 같은 효과를 노리거나 주장하지 않는다 (기획서 7-5).
 - WAV로 합성한 뒤 afconvert(macOS) 또는 ffmpeg로 AAC(.m4a, 모노 64kbps)로 변환한다.
 - 출시용 음원이 정해지면 교체한다 (기획서 7-5).
 """
@@ -93,7 +94,7 @@ def soft_bell(note, seconds=4.0):
 
 
 def heartbeat(seconds, bpm):
-    """낮고 부드러운 심장 박동(쿵-쿵). 강아지가 어미 곁처럼 느끼도록."""
+    """낮고 부드러운 심장 박동(쿵-쿵)."""
     out = np.zeros(int(seconds * SR))
     beat = t_axis(0.25)
     # 차량 스피커가 낼 수 있는 높이(70Hz 이상)로, 배음을 더해 작은 스피커에서도 들리게 한다

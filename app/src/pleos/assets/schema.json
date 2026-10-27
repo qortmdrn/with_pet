@@ -20,7 +20,7 @@
       "type": "function",
       "function": {
         "name": "SET_PET_MODE",
-        "description": "Turns the in-car pet comfort mode on or off. Pet comfort mode adjusts the cabin temperature and fan, slightly opens the rear windows, lowers the volume and plays calming sounds for the pet.",
+        "description": "Turns the in-car pet comfort mode on or off. Pet comfort mode adjusts the cabin temperature and fan, slightly opens the rear windows only if the user has enabled it in settings, lowers the volume and plays soft, gentle background sounds for the pet.",
         "parameters": {
           "type": "object",
           "properties": {

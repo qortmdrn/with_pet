@@ -25,6 +25,7 @@ class DataStoreSettingsRepository(
         PetModeSettings(
             targetTempC = p[TARGET_TEMP] ?: d.targetTempC,
             fanLevel = p[FAN_LEVEL] ?: d.fanLevel,
+            rearWindowEnabled = p[WINDOW_ENABLED] ?: d.rearWindowEnabled,
             rearWindowOpenPercent = p[WINDOW_PERCENT] ?: d.rearWindowOpenPercent,
             mediaVolumePercent = p[VOLUME_PERCENT] ?: d.mediaVolumePercent,
             autoPlayCalmSound = p[AUTO_PLAY] ?: d.autoPlayCalmSound,
@@ -43,6 +44,7 @@ class DataStoreSettingsRepository(
         dataStore.edit { p ->
             p[TARGET_TEMP] = settings.targetTempC
             p[FAN_LEVEL] = settings.fanLevel
+            p[WINDOW_ENABLED] = settings.rearWindowEnabled
             p[WINDOW_PERCENT] = settings.rearWindowOpenPercent
             p[VOLUME_PERCENT] = settings.mediaVolumePercent
             p[AUTO_PLAY] = settings.autoPlayCalmSound
@@ -73,6 +75,7 @@ class DataStoreSettingsRepository(
     private companion object {
         val TARGET_TEMP = floatPreferencesKey("pet_mode_target_temp_c")
         val FAN_LEVEL = intPreferencesKey("pet_mode_fan_level")
+        val WINDOW_ENABLED = booleanPreferencesKey("pet_mode_rear_window_enabled")
         val WINDOW_PERCENT = intPreferencesKey("pet_mode_rear_window_percent")
         val VOLUME_PERCENT = intPreferencesKey("pet_mode_media_volume_percent")
         val AUTO_PLAY = booleanPreferencesKey("pet_mode_auto_play_calm")
