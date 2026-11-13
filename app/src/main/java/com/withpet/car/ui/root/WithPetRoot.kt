@@ -228,7 +228,7 @@ private fun RestAlertCard(
     ) {
         Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Schedule, contentDescription = null, modifier = Modifier.size(36.dp), tint = WithPetColors.Primary)
+                Icon(Icons.Filled.Schedule, contentDescription = null, modifier = Modifier.size(36.dp), tint = WithPetColors.Accent)
                 Spacer(Modifier.width(12.dp))
                 Text(suggestion.message, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }

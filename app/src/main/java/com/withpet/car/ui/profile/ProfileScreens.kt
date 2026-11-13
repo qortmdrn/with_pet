@@ -76,7 +76,7 @@ fun ProfileListScreen(
                                 Text(pet.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 if (isRep) {
                                     Spacer(Modifier.width(12.dp))
-                                    StatusBadge("대표", WithPetColors.Primary)
+                                    StatusBadge("대표", WithPetColors.Accent)
                                 }
                             }
                             Text(pet.summary(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)

@@ -305,7 +305,7 @@ enum class CalmSituation { DEPARTURE, LONG_DRIVE, TO_HOSPITAL, RETURN_HOME }
   - 스크롤 목록은 최대 3개 항목만 표시하고 "정차 후 더 보기" 표시
   - 텍스트 입력 화면(프로필·설정)은 진입 불가, "정차 후 이용해 주세요" 안내
 - 실제 주행 제한은 `CarUxRestrictionsManager`의 상태를 따른다. 위 규칙은 그보다 엄격한 앱 자체 기준이다.
-- 다크 테마 기본, 고대비. 플레오스 디자인 가이드가 있으면 그것을 우선한다.
+- 밝은 테마 기본, 고대비. 플레오스 디자인 가이드가 있으면 그것을 우선한다.
 
 ### 7-1. 홈 (`ui/home`)
 

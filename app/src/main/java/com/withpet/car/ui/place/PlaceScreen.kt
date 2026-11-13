@@ -69,7 +69,7 @@ fun PlaceScreen(viewModel: PlaceViewModel = hiltViewModel()) {
             }
         }
         state.message?.let {
-            Text(it, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(it, style = MaterialTheme.typography.bodyLarge, color = WithPetColors.Accent, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         val result = state.result
         when {
@@ -113,7 +113,7 @@ private fun PlaceItem(item: NearbyPetPlace, hasRoute: Boolean, restricted: Boole
                     Text("%.1fkm".format(item.distanceKm), style = MaterialTheme.typography.bodyLarge)
                     OpenStatusBadge(item.status)
                     // 주행 중에는 텍스트 한 줄 이하: 부가 정보는 정차 시에만
-                    if (!restricted && place.largeDogAllowed) StatusBadge("대형견 가능", MaterialTheme.colorScheme.primary)
+                    if (!restricted && place.largeDogAllowed) StatusBadge("대형견 가능", WithPetColors.Accent)
                 }
                 if (!restricted) Details(place)
             }

@@ -11,7 +11,15 @@
 ./gradlew connectedFakeDebugAndroidTest  # UI 테스트 (에뮬레이터 필요)
 ```
 
-debug APK는 아이콘 라이브러리 때문에 60MB 이상이다. 콜드 스타트 측정이나 저장 공간이 작은 에뮬레이터에는 `assembleFakeRelease`(R8 적용, 약 4MB, 디버그 서명)를 쓴다.
+에뮬레이터에서 실행 (fake 패키지명은 `com.withpet.car.fake`, pleos는 `com.withpet.car`):
+
+```bash
+~/Library/Android/sdk/emulator/emulator -avd WithPet_Car &
+./gradlew installFakeDebug     # 설치 후 런처에서 '위드펫' 실행
+./gradlew installPleosDebug    # Pleos_Connect_v2.1.0 AVD에서
+```
+
+debug APK는 아이콘 라이브러리 때문에 70MB 이상이다 (fake 약 75MB, pleos 약 99MB). 콜드 스타트 측정이나 저장 공간이 작은 에뮬레이터에는 `assembleFakeRelease`(R8 적용, 약 9MB — 그중 안정 사운드 음원 약 4MB, 디버그 서명)를 쓴다.
 
 ## 구조
 
@@ -22,7 +30,7 @@ debug APK는 아이콘 라이브러리 때문에 60MB 이상이다. 콜드 스�
 | `platform` | 차량·내비·위치·전화·주행·음성 어댑터 인터페이스와 Fake 구현 |
 | `media` | `CalmPlaybackService`(MediaSessionService) |
 | `ui` | Compose 화면 |
-| `src/fake`, `src/pleos` | flavor별 어댑터 바인딩, 디버그 메뉴(fake 전용) |
+| `src/fake`, `src/pleos` | flavor별 어댑터 바인딩, 디버그 메뉴(fake 전용, pleos는 빈 구현) |
 
 ## 디버그 메뉴 (fake)
 
@@ -92,7 +100,7 @@ python3 scripts/build_public_data.py data/facilities_with_pet.csv app/src/main/a
 
 ## 남은 일 (13장 확인 필요)
 
-- Pleos Connect Emulator 2.1.0 설치 후 위 항목 검증 (Android Studio SDK Manager → SDK Update Sites, 기획서 링크 참조)
+- Pleos Connect Emulator 2.1.0(AVD `Pleos_Connect_v2.1.0`, 설치됨)에서 위 항목 검증 (Android Studio SDK Manager → SDK Update Sites, 기획서 링크 참조)
 - 실차 확인: `ACTION_DIAL`이 Pleos 다이얼러를 띄우는지, 블루투스 휴대폰이 없을 때 다이얼러가 어떻게 보이는지, 주행 중 다이얼패드 제한(`UX_RESTRICTIONS_NO_DIALPAD`)에서도 통화 버튼을 누를 수 있는지
 - Pleos 승인·신청: Vehicle 제어 권한(앱 마켓 사전 승인), Gleo `schema.json` 검토·승인(제출 경로는 문서에 없어 Pleos에 문의), TTS·STT 서버 모드용 My Project 자격 증명(지금은 `ON_DEVICE`라 불필요)
 - 심사 대비: 개인정보 처리방침에 마이크(STT)·위치·전화 기재, 오디오 포커스(Gleo 호출 시 안정 사운드 즉시 정지), TTS 앞 150~200ms 무음(pre-roll) 검토 (`docs/pleos-sdk/app-review.md`)

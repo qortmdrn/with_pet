@@ -1,5 +1,6 @@
 package com.withpet.car.ui.walk
 
+import com.withpet.car.ui.theme.WithPetColors
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,7 +67,7 @@ fun WalkScreen(viewModel: WalkViewModel = hiltViewModel()) {
             }
         }
         state.message?.let {
-            Text(it, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(it, style = MaterialTheme.typography.bodyLarge, color = WithPetColors.Accent, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         val spots = state.spots
         when {
@@ -88,9 +89,9 @@ private fun WalkSpotItem(item: NearbyWalkSpot, hasRoute: Boolean, restricted: Bo
                 Text(spot.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("%.1fkm".format(item.distanceKm), style = MaterialTheme.typography.bodyLarge)
-                    StatusBadge(spot.type.label, MaterialTheme.colorScheme.primary)
+                    StatusBadge(spot.type.label, WithPetColors.Accent)
                     // 주행 중에는 텍스트 한 줄 이하: 부가 정보는 정차 시에만
-                    if (!restricted && spot.largeDogAllowed) StatusBadge("대형견 가능", MaterialTheme.colorScheme.primary)
+                    if (!restricted && spot.largeDogAllowed) StatusBadge("대형견 가능", WithPetColors.Accent)
                 }
                 if (!restricted) Details(item)
             }
