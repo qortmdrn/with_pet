@@ -29,21 +29,58 @@
 - **응급 화면에는 광고·추천·팝업이 없습니다.** 원격 진료로 오해될 문구도 쓰지 않습니다.
 - **확인되지 않은 정보는 확실하다고 하지 않습니다:** 진료 시간을 해석할 수 없는 병원은 "진료 시간 미확인 · 전화 확인 필요"로 표시합니다. 안정 사운드는 반려동물을 위한 편안한 청각 환경으로만 소개하고, 효과를 주장하지 않습니다.
 
-## 실행 방법
+## APK 파일
 
-### 제출한 APK
-
-| 파일 | 실행 환경 |
+| 파일 | 위치 |
 | --- | --- |
-| `SantaPet_WithPet_release.apk` | **Pleos Connect Emulator v2.1.0** 또는 Pleos Connect 차량. 실제 차량 공조·창문·내비·음성과 연동됩니다. |
+| `SantaPet_WithPet_release.apk` | 저장소의 [`apk/`](https://github.com/qortmdrn/with_pet/tree/main/apk) 폴더 (`apk/SantaPet_WithPet_release.apk`) |
 
-```bash
-adb install SantaPet_WithPet_release.apk
-adb emu geo fix 126.9769 37.5759   # 에뮬레이터 위치를 서울(광화문)로
-```
+Pleos Connect SDK가 연동된 릴리스 빌드입니다 (`pleos` flavor, 패키지 `com.withpet.car`, 버전 0.1.0). Pleos Connect Emulator와 Pleos Connect 차량에서 실행되며, 실제 차량 공조·창문·내비·음성과 연동됩니다.
 
-- 처음 실행할 때 나오는 위치 권한 요청에서 **[허용]** 을 눌러 주세요. 산책 스팟·동반 장소·응급 모드가 위치를 씁니다.
-- 에뮬레이터의 기본 위치는 미국(Mountain View)이라 그대로 두면 주변 장소가 없다고 나옵니다. 위 명령으로 국내 위치를 지정해 주세요.
+## 개발 환경
+
+### Pleos Connect 에뮬레이터
+
+| 항목 | 값 |
+| --- | --- |
+| 에뮬레이터 | **Pleos Connect Emulator v2.1.0** (AVD 시스템 이미지 `Pleos Connect v2.1.0 APIs`) |
+| Android 버전 | Android 14 (API 34), `arm64-v8a` |
+| 화면 규격 | **2560 × 1440 px, 160 dpi** (가로형 차량 디스플레이) |
+| 앱 표시 영역 | 화면 오른쪽 앱 영역, 약 1680 × 1210 px |
+| RAM | 2048 MB |
+
+### 빌드 환경
+
+| 항목 | 값 |
+| --- | --- |
+| JDK | 17 |
+| Android Gradle Plugin | 8.9.1 |
+| Kotlin | 2.1.20 |
+| compileSdk / targetSdk / minSdk | 35 / 35 / 30 |
+
+## 테스트 환경 및 필요한 설정
+
+1. Android Studio SDK Manager에서 **Pleos Connect Emulator v2.1.0** 시스템 이미지를 설치하고 AVD를 만들어 실행합니다.
+2. APK를 설치하고, 에뮬레이터 위치를 국내로 지정합니다.
+
+   ```bash
+   adb install apk/SantaPet_WithPet_release.apk
+   adb emu geo fix 126.9769 37.5759   # 에뮬레이터 위치를 서울(광화문)로
+   ```
+
+3. 런처에서 **위드펫**을 실행하고, 처음 나오는 위치 권한 요청에서 **[허용]** 을 누릅니다.
+
+| 설정 | 이유 |
+| --- | --- |
+| **위치 권한 허용** (`pleos.car.permission.FUSED_LOCATION`) | 산책 스팟·동반 장소·응급 모드가 현재 위치를 씁니다. 허용하지 않으면 목록이 나오지 않습니다. |
+| **에뮬레이터 위치를 국내로** | 에뮬레이터의 기본 위치는 미국(Mountain View)이라 그대로 두면 "근처에서 찾지 못했어요"가 나옵니다. 데이터는 국내 장소만 담고 있습니다. |
+| 네트워크 | 필요 없습니다. 병원·장소 데이터는 앱에 내장되어 있습니다. |
+| 휴대폰 연결 | 필요 없습니다. 연결하지 않으면 응급 모드에서 다이얼러에 병원 번호만 채워집니다. |
+
+- 응급 모드는 진료 시간 기준으로 병원을 고르므로, 시각에 따라 결과가 달라집니다 (밤에는 24시 병원 위주).
+- 풍량 설정은 에뮬레이터의 차량 시뮬레이터가 응답하지 않아 "풍량 조절에 실패했어요"가 표시될 수 있습니다. 온도 설정은 정상 동작합니다.
+
+## 실행 방법
 
 ### 소스에서 빌드
 
@@ -111,5 +148,4 @@ Kotlin, Jetpack Compose, Hilt, Room, DataStore, Media3.
 
 - **Gleo 음성 명령**은 Pleos의 스키마 승인 후 활성화됩니다. 승인 전에는 위의 adb 명령으로 확인할 수 있습니다.
 - **차량 제어 권한**(공조·창문)은 Pleos 앱 마켓 사전 승인이 필요합니다.
-- **Pleos Connect Emulator**에서는 풍량 설정 요청에 차량 시뮬레이터가 응답하지 않아 "풍량 조절에 실패했어요"가 표시될 수 있습니다. 온도 설정은 정상 동작합니다.
 - **안정 사운드**는 자체 제작한 합성 음원입니다.
