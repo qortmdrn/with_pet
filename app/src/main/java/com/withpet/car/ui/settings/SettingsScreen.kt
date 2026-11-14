@@ -1,5 +1,7 @@
 package com.withpet.car.ui.settings
 
+import com.withpet.car.ui.theme.WithPetColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -163,10 +165,10 @@ private fun RearWindowConfirmDialog(onConfirm: () -> Unit, onDismiss: () -> Unit
             )
         },
         confirmButton = {
-            TextButton(onClick = onConfirm, modifier = Modifier.size(width = 160.dp, height = 76.dp)) { Text("켜기", style = MaterialTheme.typography.titleMedium) }
+            TextButton(onClick = onConfirm, colors = ButtonDefaults.textButtonColors(contentColor = WithPetColors.Accent), modifier = Modifier.size(width = 160.dp, height = 76.dp)) { Text("켜기", style = MaterialTheme.typography.titleMedium) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, modifier = Modifier.size(width = 160.dp, height = 76.dp)) { Text("취소", style = MaterialTheme.typography.titleMedium) }
+            TextButton(onClick = onDismiss, colors = ButtonDefaults.textButtonColors(contentColor = WithPetColors.Accent), modifier = Modifier.size(width = 160.dp, height = 76.dp)) { Text("취소", style = MaterialTheme.typography.titleMedium) }
         },
     )
 }

@@ -1,114 +1,116 @@
 # 위드펫 (WithPet)
 
-플레오스 커넥트(Android Automotive) 차량용 반려동물 동승 케어 앱 MVP. 명세: [docs/withpet-dev-spec.md](docs/withpet-dev-spec.md)
+반려동물과 함께 차를 탈 때 필요한 것을 차량 화면 하나로 해결하는 **Pleos Connect 앱**입니다.
+응급 동물병원 연결, 산책·동반 장소 안내, 차 안 환경 조절을 운전 중에도 터치 한 번이나 말 한마디로 쓸 수 있습니다.
 
-## 빌드·실행
+## 왜 차 안에서 필요한가
 
-```bash
-./gradlew assembleFakeDebug            # SDK 없이 실행 (기본)
-./gradlew assemblePleosDebug           # Pleos Connect SDK 연동 (Pleos Connect Emulator 필요)
-./gradlew testFakeDebugUnitTest        # 단위 테스트 (JUnit5)
-./gradlew connectedFakeDebugAndroidTest  # UI 테스트 (에뮬레이터 필요)
-```
+반려동물과의 이동에는 차 안에서만 생기는 문제가 있습니다. 이동 중 반려동물이 갑자기 아프거나, 장거리 운전 중 쉬어 갈 곳을 찾거나, 들어갈 수 있는 카페를 찾아야 할 때입니다. 운전 중인 보호자는 이 문제를 스마트폰으로 해결할 수 없습니다. 위드펫은 차량의 내비게이션·공조·창문·음성을 직접 다뤄 이 순간들을 해결합니다.
 
-에뮬레이터에서 실행 (fake 패키지명은 `com.withpet.car.fake`, pleos는 `com.withpet.car`):
+## 주요 기능
 
-```bash
-~/Library/Android/sdk/emulator/emulator -avd WithPet_Car &
-./gradlew installFakeDebug     # 설치 후 런처에서 '위드펫' 실행
-./gradlew installPleosDebug    # Pleos_Connect_v2.1.0 AVD에서
-```
-
-debug APK는 아이콘 라이브러리 때문에 70MB 이상이다 (fake 약 75MB, pleos 약 99MB). 콜드 스타트 측정이나 저장 공간이 작은 에뮬레이터에는 `assembleFakeRelease`(R8 적용, 약 9MB — 그중 안정 사운드 음원 약 4MB, 디버그 서명)를 쓴다.
-
-## 구조
-
-| 패키지 | 역할 |
+| 기능 | 내용 |
 | --- | --- |
-| `domain` | 모델, Repository 인터페이스, UseCase, 순수 로직 (진료 상태, 응급 정렬, 휴식 알림 규칙) |
-| `data` | 공공데이터 변환 JSON(`assets/data`: 병원·동반 장소·산책 스팟), 목업 JSON(`assets/mock`: 플레이리스트), Room(프로필), DataStore(설정) |
-| `platform` | 차량·내비·위치·전화·주행·음성 어댑터 인터페이스와 Fake 구현 |
-| `media` | `CalmPlaybackService`(MediaSessionService) |
-| `ui` | Compose 화면 |
-| `src/fake`, `src/pleos` | flavor별 어댑터 바인딩, 디버그 메뉴(fake 전용, pleos는 빈 구현) |
+| **응급 모드** | 응급 버튼 한 번으로 지금 진료 중이면서 가장 빨리 도착하는 동물병원을 골라 **길 안내를 시작하고 다이얼러에 병원 번호를 채웁니다.** 진료 중인 병원이 확실하지 않으면 최대 3곳을 보여 주고, 고르면 같은 동작을 합니다. 주행 중에도 모든 기능을 쓸 수 있습니다. |
+| **펫 모드** | 토글 한 번으로 실내 온도·풍량을 맞추고 안정 사운드를 재생합니다. 켤 때마다 이동장·전용 안전벨트 사용을 확인하는 "안전 탑승 체크"를 띄웁니다. |
+| **뒷창문 환기** (선택) | 설정에서 켠 경우에만 뒷창문을 최대 10% 열고 창문을 잠급니다. 비가 오면 열지 않습니다. |
+| **휴식 알림** | 연속 주행 시간(60/90/120분)이 지나면 "90분 주행했어요. 10분 뒤 OO에서 쉬어 갈까요?"를 화면과 음성으로 알립니다. "응"이라고 대답하면 경유지로 추가합니다. |
+| **산책 스팟** | 현재 위치 주변 반려견 놀이터·공원·산책로를 거리순으로 보여 주고, 터치 한 번으로 길 안내합니다. |
+| **반려동물 동반 장소** | 동반 가능한 카페·식당 / 여행지 / 문화시설을 영업 상태("영업 중")와 거리순으로 보여 줍니다. 목록에 없는 곳은 차량 내비 검색으로 이어집니다. |
+| **안정 사운드** | 출발·장거리·병원 가는 길·귀가 상황별 음원을 재생합니다. |
+| **반려동물 프로필** | 이름·종·나이·체중·사진을 차량 안에만 저장합니다. |
 
-## 디버그 메뉴 (fake)
+## 안전을 위한 설계
 
-상단 벌레 아이콘. 위치 프리셋(위치 미수신 포함), 정차/주행 전환, 연속 주행 시간, 휴대폰 연결, 창문 미지원 차량, 비 오는 중(와이퍼 작동), 샘플 경로, 음성 명령 버튼.
+- **운전 중에는 말로:** 휴식 알림은 음성으로 읽고 "응/아니"로 답합니다. "강아지 응급이야"(Gleo)로 응급 모드를 엽니다.
+- **주행 중 화면 제한:** 주행 중에는 목록을 가까운 3곳만 보여 주고 필터를 숨깁니다. 글자는 최소 24sp입니다. 시스템 `CarUxRestrictions`도 따릅니다.
+- **전화는 운전자가 겁니다:** 앱은 다이얼러에 번호만 채우고 자동으로 발신하지 않습니다. 오터치로 원치 않는 전화가 걸리지 않습니다.
+- **창문은 보수적으로:** 뒷창문 환기는 기본 꺼짐이고, 개방률은 최대 10%로 제한합니다. 열면 창문을 잠그고, 펫 모드를 끌 때 창문을 자동으로 닫지 않습니다(끼임 방지). 대신 정차 중에 [뒷창문 닫기] 버튼을 보여 줍니다.
+- **응급 화면에는 광고·추천·팝업이 없습니다.** 원격 진료로 오해될 문구도 쓰지 않습니다.
+- **확인되지 않은 정보는 확실하다고 하지 않습니다:** 진료 시간을 해석할 수 없는 병원은 "진료 시간 미확인 · 전화 확인 필요"로 표시합니다. 안정 사운드는 반려동물을 위한 편안한 청각 환경으로만 소개하고, 효과를 주장하지 않습니다.
 
-## 명세 대비 추가·변경
+## 실행 방법
 
-- `VehicleControl.rearWindowOpenPercent()`: 펫 모드가 연 뒷창문의 복원값을 읽기 위해 추가. 값을 모르면 닫는다.
-- 뒷창문 환기는 선택 기능(기본 꺼짐, 최대 10%)이다. 펫 모드를 켤 때 와이퍼로 비를 추정해 비가 오면 열지 않고, 열면 뒷창문을 잠근다. 펫 모드 OFF 때 창문을 자동으로 닫지 않고(끼임 방지), 정차 중 홈의 [뒷창문 닫기]로 되돌린다 (명세 7-6).
-- `MediaVolumeControl`, `SpeechOutput` 어댑터: 볼륨 제어·TTS 방식이 확인 필요(13장)라 인터페이스로 분리.
-- 휴식 알림 문구의 "10분 뒤"는 쉼터까지의 ETA로 계산한다.
-- 휴식 알림 [추가] 시 경로가 없으면 해당 장소로 길 안내를 시작한다.
-- 주행 제한 = 앱 주행 상태(DRIVING) **또는** 시스템 `CarUxRestrictions`의 DO 요구.
+### 제출한 APK
 
-## Pleos SDK 연동 (M9, `src/pleos`)
+| 파일 | 실행 환경 |
+| --- | --- |
+| `withpet-pleos-release-0.1.0.apk` | **Pleos Connect Emulator v2.1.0** 또는 Pleos Connect 차량. 실제 차량 공조·창문·내비·음성과 연동됩니다. |
+| `withpet-fake-release-0.1.0.apk` | 일반 Android Automotive 에뮬레이터. 가상 차량으로 동작하며 SDK가 없어도 실행됩니다. |
 
-42dot SDK 라이선스에 동의하고 `pleos` flavor에만 SDK를 넣었다. `fake` 빌드에는 SDK가 포함되지 않는다.
-SDK 문서 정리본(API 시그니처·권한·제약, 출처 URL 포함)은 [`docs/pleos-sdk/`](docs/pleos-sdk/)에 있다.
+```bash
+adb install withpet-pleos-release-0.1.0.apk
+adb emu geo fix 126.9769 37.5759   # 에뮬레이터 위치를 서울(광화문)로
+```
 
-| 어댑터 | SDK | 구현 |
-| --- | --- | --- |
-| `PleosVehicleControl` | Vehicle 2.3.2 | 온도·풍량: 지원 좌석 구역 전체에 설정. 뒷창문: 2열 창문, 0~100%를 차량 위치 범위로 변환, 잠금은 `setWindowLock`. 비: 앞 와이퍼 스위치·작동 상태로 추정(`WiperRain`). 쓰기 권한이 없거나 지원 구역이 없으면 `UnsupportedFeature` |
-| `PleosNavigationController` | NaviHelper 3.0.5 | `requestRoute` / `addWaypoint`(최대 2곳). 장소 검색은 `requestNavigationScreen(SearchPlace)`. ETA는 `requestTrip` → `onTripInfo`(한 번에 하나씩, 3초 제한, 실패 시 직선거리 추정) |
-| `PleosLocationProvider` | FusedLocation 1.1.3 | 위치 구독, 실패 시 "위치 미수신" 처리 |
-| `PleosDrivingStateProvider` | (Android) | 공개 주행 상태 API가 없어 `CarUxRestrictions` DO 요구를 주행 중으로 본다 |
-| `PleosSpeechOutput` | TextToSpeech 3.3.1 | 휴식 알림 문장을 읽음. `ON_DEVICE` 모드라 앱 등록(자격 증명) 불필요, 한국어 |
-| `PleosVoiceCommandSource` | SpeechToText 3.3.1 | 휴식 알림을 다 읽은 뒤 한 번만 듣고(최대 8초) "응/아니"를 Confirm·Reject로 (`VoiceAnswerMatcher`). `ON_DEVICE` |
-| `GleoActionHandler` | Gleo Interface (SDK 없음) | "강아지 응급이야" → `FIND_EMERGENCY_VET`, 펫 모드 켜기/끄기 → `SET_PET_MODE`. `src/pleos/assets/schema.json` + MainActivity intent-filter. 7초 안에 `APP_ACTION_RESPONSE` broadcast로 회신. **Pleos가 스키마를 승인해야 동작** |
-| `PleosPhoneDialer` | (Android `ACTION_DIAL`) | SDK에 전화 API가 없어 차량 다이얼러에 병원 번호만 채운다. **자동 발신하지 않는다**: 사용자가 통화 버튼을 눌러야 걸림 (`CALL_PHONE` 권한 불필요) |
-| `AppPlaybackVolume` | (앱 플레이어) | SDK에 미디어 볼륨 API가 없어 펫 모드는 안정 사운드(앱 재생) 볼륨만 낮춘다 |
+- 처음 실행할 때 나오는 위치 권한 요청에서 **[허용]** 을 눌러 주세요. 산책 스팟·동반 장소·응급 모드가 위치를 씁니다.
+- 에뮬레이터의 기본 위치는 미국(Mountain View)이라 그대로 두면 주변 장소가 없다고 나옵니다. 위 명령으로 국내 위치를 지정해 주세요.
 
-선언 권한: `CAR_CLIMATE`, `CONTROL_CAR_CLIMATE`, `CAR_WINDOWS`, `CONTROL_CAR_WINDOWS`(Vehicle 권한은 **앱 마켓 사전 승인 필요**), `NAVI_ROUTE`, `NAVI_ROUTE_SEARCH`, `NAVI_CUSTOM_MAP`, `FUSED_LOCATION`, `TTS_SERVICE`, `STT_SERVICE`.
+### 소스에서 빌드
 
-Gleo 스키마 승인 전에는 adb로 시험한다:
+```bash
+./gradlew assemblePleosRelease     # Pleos Connect SDK 연동 빌드
+./gradlew assembleFakeDebug        # SDK 없이 실행하는 빌드 (디버그 메뉴 포함)
+./gradlew testFakeDebugUnitTest    # 단위 테스트
+./gradlew connectedFakeDebugAndroidTest   # UI 테스트 (에뮬레이터 필요)
+```
+
+`fake` 빌드(패키지 `com.withpet.car.fake`)는 화면 위의 벌레 아이콘으로 디버그 메뉴를 엽니다. 위치, 정차/주행, 연속 주행 시간, 휴대폰 연결, 비 오는 중, 음성 명령을 바꿔 가며 모든 흐름을 재현할 수 있습니다.
+
+### 음성 명령 (Gleo)
+
+`app/src/pleos/assets/schema.json`으로 Gleo에 두 가지 동작을 등록합니다: 응급 병원 찾기(`FIND_EMERGENCY_VET`, 예: "강아지 응급이야")와 펫 모드 켜기/끄기(`SET_PET_MODE`, 예: "펫 모드 켜 줘"). Gleo 스키마는 Pleos 승인 후 활성화되므로, 승인 전에는 아래처럼 같은 동작을 확인할 수 있습니다.
+
 ```bash
 adb shell am start -a FIND_EMERGENCY_VET -n com.withpet.car/.MainActivity
 adb shell am start -a SET_PET_MODE -n com.withpet.car/.MainActivity --es ACTION_PARAM '{"state":"ON"}'
 ```
 
-### 에뮬레이터에서 확인할 것
+## Pleos Connect SDK 활용
 
-- 뒷창문 10%가 실제로 몇 cm 열리는지 (반려동물 머리가 빠지지 않는 폭인지 보고 `REAR_WINDOW_MAX_PERCENT` 조정), 와이퍼 스위치·상태가 읽히는지(AUTO일 때 `WiperState`가 비에 따라 바뀌는지), 창문 잠금 중에도 운전석 마스터 스위치로 뒷창문을 닫을 수 있는지
-- 창문 위치 최솟값이 '완전히 닫힘'인지 (`WindowPositionMapping`의 가정). 문서에는 최솟값·최댓값의 의미가 없고, AAOS 정의상 틸트 창(선루프 등)은 최솟값이 음수일 수 있다
-- `requestRoute`·`requestTrip`에 POI ID 없이(빈 문자열) 좌표만으로 경로·ETA가 잡히는지 (문서상 poiId는 필수 인자)
-- `TripInfo.eta`가 소요 초인지 도착 시각인지 (코드는 둘 다 처리), 활성 경로 없이도 `requestTrip`이 되는지, 응답 시간 (응급 목록은 상위 5곳 ETA를 1.5초 안에 다 받아야 씀)
-- TTS·STT `ON_DEVICE` 초기화와 한국어 인식, 휴식 알림 음성 → "응/아니" 흐름, SDK 콜백 스레드 (문서에 없음)
-- Gleo Action을 adb로 보냈을 때 응급 화면 진입·펫 모드 토글, 이미 앱이 떠 있을 때(`onNewIntent`) 동작
-- 경로 요청 직후 `onNavigationStatus`가 `FREE_DRIVE`를 먼저 보내 활성 경로가 지워지지 않는지
-- `Vehicle.initialize()` 직후 바로 호출해도 되는지 (서비스 바인딩 지연)
-- `requestNavigationScreen(SearchPlace("애견동반 카페"))`가 내비 검색 화면을 앞으로 띄우는지, 검색 결과가 쓸 만한지 (키워드 조정 필요할 수 있음)
+| SDK | 쓰는 곳 |
+| --- | --- |
+| Vehicle 2.3.2 | 펫 모드의 온도·풍량 설정, 뒷창문 개방·잠금, 앞 와이퍼 상태로 비 추정 |
+| NaviHelper 3.0.5 | 길 안내·경유지 추가, 응급 병원 ETA 계산, 내비 장소 검색 화면 열기 |
+| FusedLocation 1.1.3 | 현재 위치 (주변 병원·장소 검색) |
+| TextToSpeech 3.3.1 | 휴식 알림 음성 안내 (온디바이스, 한국어) |
+| SpeechToText 3.3.1 | 휴식 알림에 "응/아니"로 답하기 (온디바이스) |
+| Gleo Interface | "강아지 응급이야", 펫 모드 켜기/끄기 음성 명령 |
 
-## 공공데이터 (병원·동반 장소·산책 스팟)
+전화는 SDK에 API가 없어 Android `ACTION_DIAL`로 차량 다이얼러를 엽니다. 주행 상태는 `CarUxRestrictions`로 판단합니다.
 
-`app/src/main/assets/data/`의 JSON은 공공데이터 "반려동물 동반 가능 문화시설" CSV를 변환한 것이다. 원본 CSV(30MB)는 저장소에 넣지 않는다(`.gitignore`). 원본이 바뀌면 `data/`에 넣고 다시 만든다.
+## 구조
 
-```bash
-python3 scripts/build_public_data.py data/facilities_with_pet.csv app/src/main/assets/data
-./gradlew testFakeDebugUnitTest --tests '*AssetTest*'   # 개수·좌표·전화번호 형식·운영시간 해석률 검증
-```
+Kotlin, Jetpack Compose, Hilt, Room, DataStore, Media3.
 
-- `hospitals.json`: 동물병원 (CSV에 같은 병원이 약 3번씩 반복되어 중복 제거 후 약 4,500곳, 1.1MB). 응급 모드에서 쓴다.
-- `pet_places.json`: 카페·식당 / 여행지 / 문화시설 중 동반 가능(Y)만 (약 1,900곳, 700KB). 약국·펜션은 제외.
-- `walk_spots.json`: 여행지 중 산책할 만한 곳 (약 560곳). 이름·설명으로 반려견 놀이터·공원·산책로·물가·쉼터를 나눈다 (`walk_type()`).
-- 공휴일: `KoreanHolidays`에 2026~2027년 공휴일(대체공휴일 포함)이 들어 있다. **매년 다음 해 날짜를 추가할 것**(범위 밖 해는 공휴일 휴무를 반영하지 못함). 임시공휴일도 지정되면 추가.
-- 운영시간·휴무일은 원문 그대로 두고 앱의 `OpeningHoursParser`가 해석한다 (동반 장소 약 93%, 병원 약 59% — 병원은 운영시간 "정보없음"이 많고, "N째주" 휴진은 미확인으로 처리).
-- 출처 표기와 이용 조건(공공누리 유형 등)은 원본 제공처 기준으로 확인 필요. 화면에는 출처 문구를 표시한다.
+| 패키지 | 역할 |
+| --- | --- |
+| `domain` | 모델, UseCase, 순수 로직 (진료 상태 계산, 응급 병원 정렬, 휴식 알림 규칙) |
+| `data` | 공공데이터 JSON, Room(프로필), DataStore(설정) |
+| `platform` | 차량·내비·위치·전화·주행 상태·음성 어댑터 인터페이스 |
+| `media` | 안정 사운드 재생 서비스 (`MediaSessionService`) |
+| `ui` | Compose 화면 |
+| `src/pleos`, `src/fake` | 어댑터 구현: Pleos SDK 연동 / 가상 차량 |
 
-## 남은 일 (13장 확인 필요)
+차량 기능은 모두 어댑터 인터페이스 뒤에 두어, 같은 화면과 로직이 실제 차량(`pleos`)과 가상 차량(`fake`)에서 똑같이 동작합니다. 차량이 지원하지 않는 기능은 "이 차량에서는 ○○을 지원하지 않아요"로 안내하고 나머지 기능은 계속 동작합니다.
 
-- Pleos Connect Emulator 2.1.0(AVD `Pleos_Connect_v2.1.0`, 설치됨)에서 위 항목 검증 (Android Studio SDK Manager → SDK Update Sites, 기획서 링크 참조)
-- 실차 확인: `ACTION_DIAL`이 Pleos 다이얼러를 띄우는지, 블루투스 휴대폰이 없을 때 다이얼러가 어떻게 보이는지, 주행 중 다이얼패드 제한(`UX_RESTRICTIONS_NO_DIALPAD`)에서도 통화 버튼을 누를 수 있는지
-- Pleos 승인·신청: Vehicle 제어 권한(앱 마켓 사전 승인), Gleo `schema.json` 검토·승인(제출 경로는 문서에 없어 Pleos에 문의), TTS·STT 서버 모드용 My Project 자격 증명(지금은 `ON_DEVICE`라 불필요)
-- 심사 대비: 개인정보 처리방침에 마이크(STT)·위치·전화 기재, 오디오 포커스(Gleo 호출 시 안정 사운드 즉시 정지), TTS 앞 150~200ms 무음(pre-roll) 검토 (`docs/pleos-sdk/app-review.md`)
-- 응급 원터치 안내 유의점: 진료 중 병원이 있으면 응급 버튼 한 번에 길 안내가 시작되고 다이얼러에 병원 번호가 채워진다 (pleos는 `ACTION_DIAL`이라 자동 발신은 안 됨). 나중에 자동 발신(`ACTION_CALL` 등)으로 바꾼다면
-  - 발신은 블루투스로 연결된 운전자 휴대폰 회선으로 나가야 한다 (병원에는 운전자 번호가 표시됨). 차량 통신 모듈 회선이 아닌지 확인
-  - 오터치로 의도치 않은 발신이 생길 수 있다. 필요하면 자동 선택 시 길 안내만 하고 전화는 버튼으로 거는 방식 검토
-  - "다른 병원 보기"로 다시 고르면 두 번째 발신이 나가며, 먼저 건 통화는 앱이 끊지 않는다
-  - 병원 번호는 **실제 번호**(`assets/data/hospitals.json`)다. 지금은 fake 빌드는 토스트만, pleos 빌드는 다이얼러에 번호만 채우지만, 자동 발신으로 바꾸는 순간 테스트 중에도 실제 병원으로 전화가 나간다. 바꾸기 전에 테스트용 발신 차단 방안을 정할 것
-- 안정 사운드는 "반려동물을 위한 편안한 차량 내 청각 환경"으로만 소개한다. 멀미·불안 완화 효과를 뒷받침할 근거가 없으므로 스토어 설명·심사 자료에 효과를 주장하는 표현을 쓰지 않는다 (기획서 7-5)
-- 안정 사운드 음원: 지금은 `scripts/generate_calm_sounds.py`로 합성한 임시 음원(곡당 60초 루프, AAC 64kbps, 총 약 4MB). 출시 전 실제 차량 스피커로 들어 보고, 필요하면 라이선스 음원이나 작곡으로 교체. 심사 기준의 "임시 콘텐츠 금지"에 걸릴 수 있으니 제출 전 확정할 것
-- 패키지명 확정, 릴리스 서명
+## 데이터
+
+공공데이터 **"반려동물 동반 가능 문화시설"** 을 변환해 앱에 내장했습니다. 네트워크 없이도 응급 모드가 동작합니다.
+
+| 파일 | 내용 |
+| --- | --- |
+| `hospitals.json` | 동물병원 약 4,500곳 (중복 제거) |
+| `pet_places.json` | 동반 가능 카페·식당 / 여행지 / 문화시설 약 1,900곳 |
+| `walk_spots.json` | 반려견 놀이터·공원·산책로 등 약 560곳 |
+
+- 운영시간·휴무일 원문을 앱이 해석해 영업 상태를 계산합니다. 2026~2027년 공휴일(대체공휴일 포함)을 반영합니다.
+- 화면에 출처와 "운영 정보가 바뀌었을 수 있으니 방문 전 확인해 주세요"를 표시합니다.
+- 변환 스크립트: `scripts/build_public_data.py`
+
+## 알려진 제약
+
+- **Gleo 음성 명령**은 Pleos의 스키마 승인 후 활성화됩니다. 승인 전에는 위의 adb 명령으로 확인할 수 있습니다.
+- **차량 제어 권한**(공조·창문)은 Pleos 앱 마켓 사전 승인이 필요합니다.
+- **Pleos Connect Emulator**에서는 풍량 설정 요청에 차량 시뮬레이터가 응답하지 않아 "풍량 조절에 실패했어요"가 표시될 수 있습니다. 온도 설정은 정상 동작합니다.
+- **안정 사운드**는 자체 제작한 합성 음원입니다.

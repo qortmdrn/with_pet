@@ -4,6 +4,7 @@ import ai.pleos.playground.location.fused.FusedLocation
 import ai.pleos.playground.location.fused.listener.FusedLocationListener
 import ai.pleos.playground.location.fused.model.LocationData
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import com.withpet.car.di.ApplicationScope
 import com.withpet.car.domain.model.GeoPoint
@@ -12,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.shareIn
 import javax.inject.Inject
@@ -25,6 +27,10 @@ class PleosLocationProvider @Inject constructor(
 ) : LocationProvider {
 
     private val locations: Flow<GeoPoint> = callbackFlow {
+        // 위치 권한은 런타임 권한이다. 사용자가 허용할 때까지 기다렸다가 구독한다.
+        while (context.checkSelfPermission(PERMISSION) != PackageManager.PERMISSION_GRANTED) {
+            delay(PERMISSION_POLL_MS)
+        }
         val fused = FusedLocation(context.applicationContext)
         val started = runCatching {
             fused.initialize()
@@ -60,5 +66,7 @@ class PleosLocationProvider @Inject constructor(
     private companion object {
         const val TAG = "PleosLocation"
         const val STOP_TIMEOUT_MS = 5_000L
+        const val PERMISSION = "pleos.car.permission.FUSED_LOCATION"
+        const val PERMISSION_POLL_MS = 1_000L
     }
 }

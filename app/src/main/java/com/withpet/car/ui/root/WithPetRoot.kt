@@ -1,5 +1,6 @@
 package com.withpet.car.ui.root
 
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -260,7 +261,7 @@ private fun SafetyCheckDialog(onConfirm: () -> Unit) {
             )
         },
         confirmButton = {
-            TextButton(onClick = onConfirm, modifier = Modifier.size(width = 160.dp, height = 76.dp)) {
+            TextButton(onClick = onConfirm, colors = ButtonDefaults.textButtonColors(contentColor = WithPetColors.Accent), modifier = Modifier.size(width = 160.dp, height = 76.dp)) {
                 Text("확인", style = MaterialTheme.typography.titleMedium)
             }
         },
