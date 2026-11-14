@@ -35,11 +35,10 @@
 
 | 파일 | 실행 환경 |
 | --- | --- |
-| `withpet-pleos-release-0.1.0.apk` | **Pleos Connect Emulator v2.1.0** 또는 Pleos Connect 차량. 실제 차량 공조·창문·내비·음성과 연동됩니다. |
-| `withpet-fake-release-0.1.0.apk` | 일반 Android Automotive 에뮬레이터. 가상 차량으로 동작하며 SDK가 없어도 실행됩니다. |
+| `SantaPet_WithPet_release.apk` | **Pleos Connect Emulator v2.1.0** 또는 Pleos Connect 차량. 실제 차량 공조·창문·내비·음성과 연동됩니다. |
 
 ```bash
-adb install withpet-pleos-release-0.1.0.apk
+adb install SantaPet_WithPet_release.apk
 adb emu geo fix 126.9769 37.5759   # 에뮬레이터 위치를 서울(광화문)로
 ```
 
